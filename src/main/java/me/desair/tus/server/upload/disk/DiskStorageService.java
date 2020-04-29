@@ -7,10 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
-import java.nio.channels.ReadableByteChannel;
-import java.nio.channels.WritableByteChannel;
+import java.nio.channels.*;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -149,9 +146,9 @@ public class DiskStorageService extends AbstractDiskBasedService implements Uplo
             try (ReadableByteChannel uploadedBytes = Channels.newChannel(inputStream);
                 FileChannel file = FileChannel.open(bytesPath, WRITE)) {
 
-                try {
+                try (FileLock lock = file.lock()){
                     //Lock will be released when the channel closes
-                    file.lock();
+
 
                     //Validate that the given offset is at the end of the file
                     if (!offset.equals(file.size())) {
@@ -166,7 +163,12 @@ public class DiskStorageService extends AbstractDiskBasedService implements Uplo
 
                 } catch (Exception ex) {
                     //An error occurred, try to write as much data as possible
-                    newOffset = writeAsMuchAsPossible(file);
+                    long tempOffset = 0;
+                    if (file != null) {
+                        file.force(true);
+                        tempOffset = file.size();
+                    }
+                    newOffset = tempOffset;
                     throw ex;
                 }
 
@@ -341,12 +343,4 @@ public class DiskStorageService extends AbstractDiskBasedService implements Uplo
         return id;
     }
 
-    private long writeAsMuchAsPossible(FileChannel file) throws IOException {
-        long offset = 0;
-        if (file != null) {
-            file.force(true);
-            offset = file.size();
-        }
-        return offset;
-    }
 }
