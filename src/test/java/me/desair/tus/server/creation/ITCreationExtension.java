@@ -22,7 +22,6 @@ import java.util.UUID;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.*;
 
@@ -68,7 +67,7 @@ public class ITCreationExtension extends AbstractTusExtensionIntegrationTest {
         //Create upload
         servletRequest.addHeader(HttpHeader.UPLOAD_LENGTH, 9);
         executeCall(HttpMethod.POST, false);
-        verify(uploadStorageService, times(1)).create(notNull(UploadInfo.class), nullable(String.class));
+        verify(uploadStorageService, times(1)).create(any(UploadInfo.class), nullable(String.class));
         assertResponseHeader(HttpHeader.LOCATION, UPLOAD_URL + id.toString());
         assertResponseStatus(HttpServletResponse.SC_CREATED);
         //Check data with head request
@@ -90,7 +89,7 @@ public class ITCreationExtension extends AbstractTusExtensionIntegrationTest {
         //Create upload
         servletRequest.addHeader(HttpHeader.UPLOAD_DEFER_LENGTH, 1);
         executeCall(HttpMethod.POST, false);
-        verify(uploadStorageService, times(1)).create(notNull(UploadInfo.class), nullable(String.class));
+        verify(uploadStorageService, times(1)).create(any(UploadInfo.class), nullable(String.class));
         assertResponseHeader(HttpHeader.LOCATION, UPLOAD_URL + id.toString());
         assertResponseStatus(HttpServletResponse.SC_CREATED);
         //Check data with head request
@@ -128,7 +127,7 @@ public class ITCreationExtension extends AbstractTusExtensionIntegrationTest {
         servletRequest.addHeader(HttpHeader.UPLOAD_LENGTH, 9);
         servletRequest.addHeader(HttpHeader.UPLOAD_METADATA, "encoded metadata");
         executeCall(HttpMethod.POST, false);
-        verify(uploadStorageService, times(1)).create(notNull(UploadInfo.class), nullable(String.class));
+        verify(uploadStorageService, times(1)).create(any(UploadInfo.class), nullable(String.class));
         assertResponseHeader(HttpHeader.LOCATION, UPLOAD_URL + id.toString());
         assertResponseStatus(HttpServletResponse.SC_CREATED);
         //Check data with head request
@@ -145,7 +144,7 @@ public class ITCreationExtension extends AbstractTusExtensionIntegrationTest {
         //Create upload
         servletRequest.addHeader(HttpHeader.UPLOAD_LENGTH, 90);
         executeCall(HttpMethod.POST, false);
-        verify(uploadStorageService, times(1)).create(notNull(UploadInfo.class), nullable(String.class));
+        verify(uploadStorageService, times(1)).create(any(UploadInfo.class), nullable(String.class));
         assertResponseHeader(HttpHeader.LOCATION, UPLOAD_URL + id.toString());
         assertResponseStatus(HttpServletResponse.SC_CREATED);
         //Check data with head request
@@ -191,7 +190,7 @@ public class ITCreationExtension extends AbstractTusExtensionIntegrationTest {
         servletRequest.addHeader(HttpHeader.UPLOAD_LENGTH, 9);
         servletRequest.addHeader(HttpHeader.UPLOAD_METADATA, "submission metadata");
         executeCall(HttpMethod.POST, false);
-        verify(uploadStorageService, times(1)).create(notNull(UploadInfo.class), nullable(String.class));
+        verify(uploadStorageService, times(1)).create(any(UploadInfo.class), nullable(String.class));
         assertResponseHeader(HttpHeader.LOCATION, "/submission/0ae5f8vv4s8c/files/upload/" + id.toString());
         assertResponseStatus(HttpServletResponse.SC_CREATED);
         //Check data with head request
