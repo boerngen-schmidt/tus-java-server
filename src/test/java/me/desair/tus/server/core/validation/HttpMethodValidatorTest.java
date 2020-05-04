@@ -1,25 +1,29 @@
 package me.desair.tus.server.core.validation;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.fail;
-
 import me.desair.tus.server.HttpMethod;
 import me.desair.tus.server.exception.UnsupportedMethodException;
 import me.desair.tus.server.upload.UploadIdFactory;
 import me.desair.tus.server.upload.UploadStorageService;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class HttpMethodValidatorTest {
 
     private MockHttpServletRequest servletRequest;
+
     private HttpMethodValidator validator;
+
     private UploadStorageService uploadStorageService;
+
     private UploadIdFactory idFactory;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         servletRequest = new MockHttpServletRequest();
         validator = new HttpMethodValidator();
@@ -34,9 +38,11 @@ public class HttpMethodValidatorTest {
         }
     }
 
-    @Test(expected = UnsupportedMethodException.class)
+    @Test
     public void validateInvalid() throws Exception {
-        validator.validate(null, servletRequest, uploadStorageService, null);
+        Assertions.assertThrows(UnsupportedMethodException.class, () -> {
+            validator.validate(null, servletRequest, uploadStorageService, null);
+        });
     }
 
     @Test

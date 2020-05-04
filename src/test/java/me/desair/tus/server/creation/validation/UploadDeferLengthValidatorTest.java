@@ -1,15 +1,16 @@
 package me.desair.tus.server.creation.validation;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.fail;
-
 import me.desair.tus.server.HttpHeader;
 import me.desair.tus.server.HttpMethod;
 import me.desair.tus.server.exception.InvalidUploadLengthException;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * The request MUST include one of the following headers:
@@ -22,7 +23,7 @@ public class UploadDeferLengthValidatorTest {
 
     private MockHttpServletRequest servletRequest;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         servletRequest = new MockHttpServletRequest();
         validator = new UploadDeferLengthValidator();
@@ -43,84 +44,78 @@ public class UploadDeferLengthValidatorTest {
     @Test
     public void validateUploadLengthPresent() throws Exception {
         servletRequest.addHeader(HttpHeader.UPLOAD_LENGTH, 300L);
-
         //When we validate the request
         try {
             validator.validate(HttpMethod.POST, servletRequest, null, null);
         } catch (Exception ex) {
             fail();
         }
-
-        //No Exception is thrown
+    //No Exception is thrown
     }
 
     @Test
     public void validateUploadDeferLength1Present() throws Exception {
         servletRequest.addHeader(HttpHeader.UPLOAD_DEFER_LENGTH, 1);
-
         //When we validate the request
         try {
             validator.validate(HttpMethod.POST, servletRequest, null, null);
         } catch (Exception ex) {
             fail();
         }
-
-        //No Exception is thrown
+    //No Exception is thrown
     }
 
-    @Test(expected = InvalidUploadLengthException.class)
+    @Test
     public void validateUploadLengthAndUploadDeferLength1Present() throws Exception {
-        servletRequest.addHeader(HttpHeader.UPLOAD_DEFER_LENGTH, 1);
-        servletRequest.addHeader(HttpHeader.UPLOAD_LENGTH, 300L);
-
-        //When we validate the request
-        validator.validate(HttpMethod.POST, servletRequest, null, null);
-
-        //Expect an InvalidUploadLengthException
+        Assertions.assertThrows(InvalidUploadLengthException.class, () -> {
+            servletRequest.addHeader(HttpHeader.UPLOAD_DEFER_LENGTH, 1);
+            servletRequest.addHeader(HttpHeader.UPLOAD_LENGTH, 300L);
+            //When we validate the request
+            validator.validate(HttpMethod.POST, servletRequest, null, null);
+            //Expect an InvalidUploadLengthException
+        });
     }
 
-    @Test(expected = InvalidUploadLengthException.class)
+    @Test
     public void validateUploadDeferLengthNot1() throws Exception {
-        servletRequest.addHeader(HttpHeader.UPLOAD_DEFER_LENGTH, 2);
-
-        //When we validate the request
-        validator.validate(HttpMethod.POST, servletRequest, null, null);
-
-        //Expect an InvalidUploadLengthException
+        Assertions.assertThrows(InvalidUploadLengthException.class, () -> {
+            servletRequest.addHeader(HttpHeader.UPLOAD_DEFER_LENGTH, 2);
+            //When we validate the request
+            validator.validate(HttpMethod.POST, servletRequest, null, null);
+            //Expect an InvalidUploadLengthException
+        });
     }
 
-    @Test(expected = InvalidUploadLengthException.class)
+    @Test
     public void validateUploadLengthNotPresent() throws Exception {
-        //servletRequest.addHeader(HttpHeader.UPLOAD_LENGTH, 300L);
-
-        //When we validate the request
-        validator.validate(HttpMethod.POST, servletRequest, null, null);
-
-        //Expect an InvalidUploadLengthException
+        Assertions.assertThrows(InvalidUploadLengthException.class, () -> {
+            //servletRequest.addHeader(HttpHeader.UPLOAD_LENGTH, 300L);
+            //When we validate the request
+            validator.validate(HttpMethod.POST, servletRequest, null, null);
+            //Expect an InvalidUploadLengthException
+        });
     }
 
     @Test
     public void validateUploadLengthNotPresentOnFinal() throws Exception {
         //servletRequest.addHeader(HttpHeader.UPLOAD_LENGTH, 300L);
         servletRequest.addHeader(HttpHeader.UPLOAD_CONCAT, "final;1234 5678");
-
         //When we validate the request
         try {
             validator.validate(HttpMethod.POST, servletRequest, null, null);
         } catch (Exception ex) {
             fail();
         }
-
-        //No Exception is thrown
+    //No Exception is thrown
     }
 
-    @Test(expected = InvalidUploadLengthException.class)
+    @Test
     public void validateUploadLengthNotNumeric() throws Exception {
-        servletRequest.addHeader(HttpHeader.UPLOAD_LENGTH, "TEST");
-
-        //When we validate the request
-        validator.validate(HttpMethod.POST, servletRequest, null, null);
-
-        //Expect an InvalidUploadLengthException
+        Assertions.assertThrows(InvalidUploadLengthException.class, () -> {
+            servletRequest.addHeader(HttpHeader.UPLOAD_LENGTH, "TEST");
+            //When we validate the request
+            validator.validate(HttpMethod.POST, servletRequest, null, null);
+            //Expect an InvalidUploadLengthException
+        });
     }
 }

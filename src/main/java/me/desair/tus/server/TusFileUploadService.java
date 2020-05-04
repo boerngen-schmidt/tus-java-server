@@ -1,14 +1,5 @@
 package me.desair.tus.server;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.EnumSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.Set;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import me.desair.tus.server.checksum.ChecksumExtension;
 import me.desair.tus.server.concatenation.ConcatenationExtension;
 import me.desair.tus.server.core.CoreProtocol;
@@ -17,12 +8,7 @@ import me.desair.tus.server.download.DownloadExtension;
 import me.desair.tus.server.exception.TusException;
 import me.desair.tus.server.expiration.ExpirationExtension;
 import me.desair.tus.server.termination.TerminationExtension;
-import me.desair.tus.server.upload.UUIDUploadIdFactory;
-import me.desair.tus.server.upload.UploadIdFactory;
-import me.desair.tus.server.upload.UploadInfo;
-import me.desair.tus.server.upload.UploadLock;
-import me.desair.tus.server.upload.UploadLockingService;
-import me.desair.tus.server.upload.UploadStorageService;
+import me.desair.tus.server.upload.*;
 import me.desair.tus.server.upload.cache.ThreadLocalCachedStorageAndLockingService;
 import me.desair.tus.server.upload.disk.DiskLockingService;
 import me.desair.tus.server.upload.disk.DiskStorageService;
@@ -33,6 +19,16 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.EnumSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * Helper class that implements the server side tus v1.0.0 upload protocol

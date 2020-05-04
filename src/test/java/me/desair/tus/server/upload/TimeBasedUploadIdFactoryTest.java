@@ -1,113 +1,96 @@
 package me.desair.tus.server.upload;
 
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.hasToString;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.lessThan;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.assertThat;
-
 import me.desair.tus.server.util.Utils;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
 
 public class TimeBasedUploadIdFactoryTest {
 
     private UploadIdFactory idFactory;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         idFactory = new TimeBasedUploadIdFactory();
     }
 
-    @Test(expected = NullPointerException.class)
-    public void setUploadURINull() throws Exception {
-        idFactory.setUploadURI(null);
+    @Test
+    public void setUploadURINull() {
+        Assertions.assertThrows(NullPointerException.class, () -> idFactory.setUploadURI(null));
     }
 
     @Test
-    public void setUploadURINoTrailingSlash() throws Exception {
+    public void setUploadURINoTrailingSlash() {
         idFactory.setUploadURI("/test/upload");
         assertThat(idFactory.getUploadURI(), is("/test/upload"));
     }
 
     @Test
-    public void setUploadURIWithTrailingSlash() throws Exception {
+    public void setUploadURIWithTrailingSlash() {
         idFactory.setUploadURI("/test/upload/");
         assertThat(idFactory.getUploadURI(), is("/test/upload/"));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void setUploadURIBlank() throws Exception {
-        idFactory.setUploadURI(" ");
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void setUploadURINoStartingSlash() throws Exception {
-        idFactory.setUploadURI("test/upload/");
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void setUploadURIEndsWithDollar() throws Exception {
-        idFactory.setUploadURI("/test/upload$");
+    @Test
+    public void setUploadURIBlank() {
+        Assertions.assertThrows(IllegalArgumentException.class, () -> idFactory.setUploadURI(" "));
     }
 
     @Test
-    public void readUploadId() throws Exception {
+    public void setUploadURINoStartingSlash() {
+        Assertions.assertThrows(IllegalArgumentException.class, () -> idFactory.setUploadURI("test/upload/"));
+    }
+
+    @Test
+    public void setUploadURIEndsWithDollar() {
+        Assertions.assertThrows(IllegalArgumentException.class, () -> idFactory.setUploadURI("/test/upload$"));
+    }
+
+    @Test
+    public void readUploadId() {
         idFactory.setUploadURI("/test/upload");
-
-        assertThat(idFactory.readUploadId("/test/upload/1546152320043"),
-                hasToString("1546152320043"));
+        assertThat(idFactory.readUploadId("/test/upload/1546152320043"), hasToString("1546152320043"));
     }
 
     @Test
-    public void readUploadIdRegex() throws Exception {
+    public void readUploadIdRegex() {
         idFactory.setUploadURI("/users/[0-9]+/files/upload");
-
-        assertThat(idFactory.readUploadId("/users/1337/files/upload/1546152320043"),
-                hasToString("1546152320043"));
+        assertThat(idFactory.readUploadId("/users/1337/files/upload/1546152320043"), hasToString("1546152320043"));
     }
 
     @Test
-    public void readUploadIdTrailingSlash() throws Exception {
+    public void readUploadIdTrailingSlash() {
         idFactory.setUploadURI("/test/upload/");
-
-        assertThat(idFactory.readUploadId("/test/upload/1546152320043"),
-                hasToString("1546152320043"));
+        assertThat(idFactory.readUploadId("/test/upload/1546152320043"), hasToString("1546152320043"));
     }
 
     @Test
-    public void readUploadIdRegexTrailingSlash() throws Exception {
+    public void readUploadIdRegexTrailingSlash() {
         idFactory.setUploadURI("/users/[0-9]+/files/upload/");
-
-        assertThat(idFactory.readUploadId("/users/123456789/files/upload/1546152320043"),
-                hasToString("1546152320043"));
+        assertThat(idFactory.readUploadId("/users/123456789/files/upload/1546152320043"), hasToString("1546152320043"));
     }
 
     @Test
-    public void readUploadIdNoUUID() throws Exception {
+    public void readUploadIdNoUUID() {
         idFactory.setUploadURI("/test/upload");
-
         assertThat(idFactory.readUploadId("/test/upload/not-a-time-value"), is(nullValue()));
     }
 
     @Test
-    public void readUploadIdRegexNoMatch() throws Exception {
+    public void readUploadIdRegexNoMatch() {
         idFactory.setUploadURI("/users/[0-9]+/files/upload");
-
-        assertThat(idFactory.readUploadId("/users/files/upload/1546152320043"),
-                is(nullValue()));
+        assertThat(idFactory.readUploadId("/users/files/upload/1546152320043"), is(nullValue()));
     }
 
     @Test
-    public void createId() throws Exception {
+    public void createId() {
         UploadId id = idFactory.createId();
         assertThat(id, not(nullValue()));
         Utils.sleep(10);
-        assertThat(Long.parseLong(id.getOriginalObject().toString()),
-                greaterThan(System.currentTimeMillis() - 1000L));
-        assertThat(Long.parseLong(id.getOriginalObject().toString()),
-                lessThan(System.currentTimeMillis()));
+        assertThat(Long.parseLong(id.getOriginalObject().toString()), greaterThan(System.currentTimeMillis() - 1000L));
+        assertThat(Long.parseLong(id.getOriginalObject().toString()), lessThan(System.currentTimeMillis()));
     }
 }

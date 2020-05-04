@@ -1,19 +1,19 @@
 package me.desair.tus.server.download;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-
-import java.util.Arrays;
-
 import me.desair.tus.server.HttpHeader;
 import me.desair.tus.server.HttpMethod;
 import me.desair.tus.server.util.TusServletRequest;
 import me.desair.tus.server.util.TusServletResponse;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+
+import java.util.Arrays;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 
 public class DownloadOptionsRequestHandlerTest {
 
@@ -23,7 +23,7 @@ public class DownloadOptionsRequestHandlerTest {
 
     private MockHttpServletResponse servletResponse;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         servletRequest = new MockHttpServletRequest();
         servletResponse = new MockHttpServletResponse();
@@ -32,12 +32,8 @@ public class DownloadOptionsRequestHandlerTest {
 
     @Test
     public void processListExtensions() throws Exception {
-
-        handler.process(HttpMethod.OPTIONS, new TusServletRequest(servletRequest),
-                new TusServletResponse(servletResponse), null, null);
-
-        assertThat(Arrays.asList(servletResponse.getHeader(HttpHeader.TUS_EXTENSION).split(",")),
-                containsInAnyOrder("download"));
+        handler.process(HttpMethod.OPTIONS, new TusServletRequest(servletRequest), new TusServletResponse(servletResponse), null, null);
+        assertThat(Arrays.asList(servletResponse.getHeader(HttpHeader.TUS_EXTENSION).split(",")), containsInAnyOrder("download"));
     }
 
     @Test
@@ -51,5 +47,4 @@ public class DownloadOptionsRequestHandlerTest {
         assertThat(handler.supports(HttpMethod.PATCH), is(false));
         assertThat(handler.supports(null), is(false));
     }
-
 }

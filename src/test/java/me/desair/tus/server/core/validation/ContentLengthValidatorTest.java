@@ -1,24 +1,28 @@
 package me.desair.tus.server.core.validation;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.nullable;
-import static org.mockito.Mockito.when;
-
 import me.desair.tus.server.HttpHeader;
 import me.desair.tus.server.HttpMethod;
 import me.desair.tus.server.exception.InvalidContentLengthException;
 import me.desair.tus.server.upload.UploadInfo;
 import me.desair.tus.server.upload.UploadStorageService;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.mock.web.MockHttpServletRequest;
 
-@RunWith(MockitoJUnitRunner.Silent.class)
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.nullable;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class ContentLengthValidatorTest {
 
     private ContentLengthValidator validator;
@@ -28,7 +32,7 @@ public class ContentLengthValidatorTest {
     @Mock
     private UploadStorageService uploadStorageService;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         servletRequest = new MockHttpServletRequest();
         validator = new ContentLengthValidator();
@@ -40,17 +44,14 @@ public class ContentLengthValidatorTest {
         info.setOffset(0L);
         info.setLength(10L);
         when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(info);
-
         servletRequest.addHeader(HttpHeader.CONTENT_LENGTH, 10L);
-
         //When we validate the request
         try {
             validator.validate(HttpMethod.PATCH, servletRequest, uploadStorageService, null);
         } catch (Exception ex) {
             fail();
         }
-
-        //No Exception is thrown
+    //No Exception is thrown
     }
 
     @Test
@@ -59,17 +60,14 @@ public class ContentLengthValidatorTest {
         info.setOffset(5L);
         info.setLength(10L);
         when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(info);
-
         servletRequest.addHeader(HttpHeader.CONTENT_LENGTH, 5L);
-
         //When we validate the request
         try {
             validator.validate(HttpMethod.PATCH, servletRequest, uploadStorageService, null);
         } catch (Exception ex) {
             fail();
         }
-
-        //No Exception is thrown
+    //No Exception is thrown
     }
 
     @Test
@@ -78,62 +76,56 @@ public class ContentLengthValidatorTest {
         info.setOffset(2L);
         info.setLength(10L);
         when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(info);
-
         servletRequest.addHeader(HttpHeader.CONTENT_LENGTH, 3L);
-
         //When we validate the request
         try {
             validator.validate(HttpMethod.PATCH, servletRequest, uploadStorageService, null);
         } catch (Exception ex) {
             fail();
         }
-
-        //No Exception is thrown
+    //No Exception is thrown
     }
 
-    @Test(expected = InvalidContentLengthException.class)
+    @Test
     public void validateInvalidLengthInitialUpload() throws Exception {
-        UploadInfo info = new UploadInfo();
-        info.setOffset(0L);
-        info.setLength(10L);
-        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(info);
-
-        servletRequest.addHeader(HttpHeader.CONTENT_LENGTH, 11L);
-
-        //When we validate the request
-        validator.validate(HttpMethod.PATCH, servletRequest, uploadStorageService, null);
-
-        //Then expect a InvalidContentLengthException exception
+        Assertions.assertThrows(InvalidContentLengthException.class, () -> {
+            UploadInfo info = new UploadInfo();
+            info.setOffset(0L);
+            info.setLength(10L);
+            when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(info);
+            servletRequest.addHeader(HttpHeader.CONTENT_LENGTH, 11L);
+            //When we validate the request
+            validator.validate(HttpMethod.PATCH, servletRequest, uploadStorageService, null);
+            //Then expect a InvalidContentLengthException exception
+        });
     }
 
-    @Test(expected = InvalidContentLengthException.class)
+    @Test
     public void validateInvalidLengthInProgressUpload() throws Exception {
-        UploadInfo info = new UploadInfo();
-        info.setOffset(5L);
-        info.setLength(10L);
-        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(info);
-
-        servletRequest.addHeader(HttpHeader.CONTENT_LENGTH, 6L);
-
-        //When we validate the request
-        validator.validate(HttpMethod.PATCH, servletRequest, uploadStorageService, null);
-
-        //Then expect a InvalidContentLengthException exception
+        Assertions.assertThrows(InvalidContentLengthException.class, () -> {
+            UploadInfo info = new UploadInfo();
+            info.setOffset(5L);
+            info.setLength(10L);
+            when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(info);
+            servletRequest.addHeader(HttpHeader.CONTENT_LENGTH, 6L);
+            //When we validate the request
+            validator.validate(HttpMethod.PATCH, servletRequest, uploadStorageService, null);
+            //Then expect a InvalidContentLengthException exception
+        });
     }
 
-    @Test(expected = InvalidContentLengthException.class)
+    @Test
     public void validateInvalidLengthPartialUpload() throws Exception {
-        UploadInfo info = new UploadInfo();
-        info.setOffset(2L);
-        info.setLength(10L);
-        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(info);
-
-        servletRequest.addHeader(HttpHeader.CONTENT_LENGTH, 10L);
-
-        //When we validate the request
-        validator.validate(HttpMethod.PATCH, servletRequest, uploadStorageService, null);
-
-        //Then expect a InvalidContentLengthException exception
+        Assertions.assertThrows(InvalidContentLengthException.class, () -> {
+            UploadInfo info = new UploadInfo();
+            info.setOffset(2L);
+            info.setLength(10L);
+            when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(info);
+            servletRequest.addHeader(HttpHeader.CONTENT_LENGTH, 10L);
+            //When we validate the request
+            validator.validate(HttpMethod.PATCH, servletRequest, uploadStorageService, null);
+            //Then expect a InvalidContentLengthException exception
+        });
     }
 
     @Test
@@ -142,34 +134,26 @@ public class ContentLengthValidatorTest {
         info.setOffset(2L);
         info.setLength(10L);
         when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(info);
-
-        //We don't set a content length header
-        //servletRequest.addHeader(HttpHeader.CONTENT_LENGTH, 3L);
-
         //When we validate the request
         try {
             validator.validate(HttpMethod.PATCH, servletRequest, uploadStorageService, null);
         } catch (Exception ex) {
             fail();
         }
-
-        //No Exception is thrown
+    //No Exception is thrown
     }
 
     @Test
     public void validateMissingUploadInfo() throws Exception {
         when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(null);
-
         servletRequest.addHeader(HttpHeader.CONTENT_LENGTH, 3L);
-
         //When we validate the request
         try {
             validator.validate(HttpMethod.PATCH, servletRequest, uploadStorageService, null);
         } catch (Exception ex) {
             fail();
         }
-
-        //No Exception is thrown
+    //No Exception is thrown
     }
 
     @Test
@@ -183,5 +167,4 @@ public class ContentLengthValidatorTest {
         assertThat(validator.supports(HttpMethod.PATCH), is(true));
         assertThat(validator.supports(null), is(false));
     }
-
 }

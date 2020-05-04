@@ -1,17 +1,17 @@
 package me.desair.tus.server.core;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-
 import me.desair.tus.server.HttpHeader;
 import me.desair.tus.server.HttpMethod;
 import me.desair.tus.server.TusFileUploadService;
 import me.desair.tus.server.util.TusServletRequest;
 import me.desair.tus.server.util.TusServletResponse;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class CoreDefaultResponseHeadersHandlerTest {
 
@@ -21,7 +21,7 @@ public class CoreDefaultResponseHeadersHandlerTest {
 
     private CoreDefaultResponseHeadersHandler handler;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         servletRequest = new MockHttpServletRequest();
         servletResponse = new MockHttpServletResponse();
@@ -42,9 +42,7 @@ public class CoreDefaultResponseHeadersHandlerTest {
 
     @Test
     public void process() throws Exception {
-        handler.process(HttpMethod.PATCH, new TusServletRequest(servletRequest),
-                new TusServletResponse(servletResponse), null, null);
-
+        handler.process(HttpMethod.PATCH, new TusServletRequest(servletRequest), new TusServletResponse(servletResponse), null, null);
         assertThat(servletResponse.getHeader(HttpHeader.TUS_RESUMABLE), is(TusFileUploadService.TUS_API_VERSION));
         assertThat(servletResponse.getHeader(HttpHeader.CONTENT_LENGTH), is("0"));
     }
