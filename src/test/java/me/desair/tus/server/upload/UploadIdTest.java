@@ -1,12 +1,12 @@
 package me.desair.tus.server.upload;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 public class UploadIdTest {
 
@@ -25,14 +25,14 @@ public class UploadIdTest {
         assertEquals(1337L, uploadId.getOriginalObject());
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testNullConstructor() {
-        new UploadId(null);
+        Assertions.assertThrows(NullPointerException.class, () -> new UploadId(null));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testBlankConstructor() {
-        new UploadId(" \t");
+        Assertions.assertThrows(IllegalArgumentException.class, () -> new UploadId(" \t"));
     }
 
     @Test
@@ -65,12 +65,11 @@ public class UploadIdTest {
         UploadId id1 = new UploadId("id%2F1");
         UploadId id2 = new UploadId("id/1");
         UploadId id3 = new UploadId("id/1");
-
         assertEquals(id1, id2);
         assertEquals(id2, id3);
         assertEquals(id1, id1);
         assertNotEquals(id1, null);
-        assertFalse(id1.equals(UUID.randomUUID()));
+        assertNotEquals(id1, UUID.randomUUID());
     }
 
     @Test
@@ -78,7 +77,6 @@ public class UploadIdTest {
         UploadId id1 = new UploadId("id%2F1");
         UploadId id2 = new UploadId("id/1");
         UploadId id3 = new UploadId("id/1");
-
         assertEquals(id1.hashCode(), id2.hashCode());
         assertEquals(id2.hashCode(), id3.hashCode());
     }

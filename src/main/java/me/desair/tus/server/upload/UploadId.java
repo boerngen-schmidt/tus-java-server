@@ -1,21 +1,23 @@
 package me.desair.tus.server.upload;
 
-import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
-import java.util.Objects;
-
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.net.URLCodec;
 import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.Objects;
+
 /**
  * The unique identifier of an upload process in the tus protocol
  */
 public class UploadId implements Serializable {
 
-    private static final String UPLOAD_ID_CHARSET = "UTF-8";
+    private static final Charset UPLOAD_ID_CHARSET = StandardCharsets.UTF_8;
     private static final Logger log = LoggerFactory.getLogger(UploadId.class);
 
     private String urlSafeValue;
@@ -33,8 +35,8 @@ public class UploadId implements Serializable {
         URLCodec codec = new URLCodec();
         //Check if value is not encoded already
         try {
-            if (inputValue != null && inputValue.equals(codec.decode(inputValue, UPLOAD_ID_CHARSET))) {
-                this.urlSafeValue = codec.encode(inputValue, UPLOAD_ID_CHARSET);
+            if (inputValue != null && inputValue.equals(codec.decode(inputValue, UPLOAD_ID_CHARSET.name()))) {
+                this.urlSafeValue = codec.encode(inputValue, UPLOAD_ID_CHARSET.name());
             } else {
                 //value is already encoded, use as is
                 this.urlSafeValue = inputValue;
