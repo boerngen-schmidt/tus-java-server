@@ -1,59 +1,56 @@
 package me.desair.tus.server.core.validation;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.fail;
-
 import me.desair.tus.server.HttpHeader;
 import me.desair.tus.server.HttpMethod;
 import me.desair.tus.server.exception.InvalidContentTypeException;
-import org.junit.Before;
-import org.junit.Test;
-import org.springframework.mock.web.MockHttpServletRequest;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import javax.servlet.http.HttpServletRequest;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+
+@ExtendWith(MockitoExtension.class)
 public class ContentTypeValidatorTest {
 
     private ContentTypeValidator validator;
 
-    private MockHttpServletRequest servletRequest;
+    @Spy
+    private HttpServletRequest request;
 
-    @Before
+    @BeforeEach
     public void setUp() {
-        servletRequest = new MockHttpServletRequest();
         validator = new ContentTypeValidator();
     }
 
     @Test
     public void validateValid() throws Exception {
-        servletRequest.addHeader(HttpHeader.CONTENT_TYPE, ContentTypeValidator.APPLICATION_OFFSET_OCTET_STREAM);
-
-        try {
-            validator.validate(HttpMethod.PATCH, servletRequest, null, null);
-        } catch (Exception ex) {
-            fail();
-        }
-
-        //No exception is thrown
+        Mockito.doReturn(ContentTypeValidator.APPLICATION_OFFSET_OCTET_STREAM).when(request).getHeader(HttpHeader.CONTENT_TYPE);
+        Assertions.assertDoesNotThrow(() -> validator.validate(HttpMethod.PATCH, request, null, null));
     }
 
-    @Test(expected = InvalidContentTypeException.class)
+    @Test
     public void validateInvalidHeader() throws Exception {
-        servletRequest.addHeader(HttpHeader.CONTENT_TYPE, "application/octet-stream");
-
-        validator.validate(HttpMethod.PATCH, servletRequest, null, null);
-
-        //Expect a InvalidContentTypeException exception
+        Assertions.assertThrows(InvalidContentTypeException.class, () -> {
+            Mockito.doReturn("application/octet-stream").when(request).getHeader(HttpHeader.CONTENT_TYPE);
+            validator.validate(HttpMethod.PATCH, request, null, null);
+            //Expect a InvalidContentTypeException exception
+        });
     }
 
-    @Test(expected = InvalidContentTypeException.class)
+    @Test
     public void validateMissingHeader() throws Exception {
-        //We don't set the header
-        //servletRequest.addHeader(HttpHeader.CONTENT_TYPE, ContentTypeValidator.APPLICATION_OFFSET_OCTET_STREAM);
-
-        validator.validate(HttpMethod.PATCH, servletRequest, null, null);
-
-        //Expect a InvalidContentTypeException exception
+        Assertions.assertThrows(InvalidContentTypeException.class, () -> {
+            //We don't set the header
+            validator.validate(HttpMethod.PATCH, request, null, null);
+            //Expect a InvalidContentTypeException exception
+        });
     }
 
     @Test
@@ -67,5 +64,4 @@ public class ContentTypeValidatorTest {
         assertThat(validator.supports(HttpMethod.PATCH), is(true));
         assertThat(validator.supports(null), is(false));
     }
-
 }

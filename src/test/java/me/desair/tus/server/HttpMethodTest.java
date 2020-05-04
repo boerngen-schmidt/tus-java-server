@@ -1,16 +1,18 @@
 package me.desair.tus.server;
 
-import static org.junit.Assert.assertEquals;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.springframework.mock.web.MockHttpServletRequest;
 
 import java.util.EnumSet;
 
-import org.junit.Test;
-import org.springframework.mock.web.MockHttpServletRequest;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class HttpMethodTest {
 
     @Test
-    public void forName() throws Exception {
+    public void forName() {
         assertEquals(HttpMethod.DELETE, HttpMethod.forName("delete"));
         assertEquals(HttpMethod.GET, HttpMethod.forName("get"));
         assertEquals(HttpMethod.HEAD, HttpMethod.forName("head"));
@@ -18,58 +20,48 @@ public class HttpMethodTest {
         assertEquals(HttpMethod.POST, HttpMethod.forName("post"));
         assertEquals(HttpMethod.PUT, HttpMethod.forName("put"));
         assertEquals(HttpMethod.OPTIONS, HttpMethod.forName("options"));
-        assertEquals(null, HttpMethod.forName("test"));
+        assertNull(HttpMethod.forName("test"));
     }
 
     @Test
-    public void getMethodNormal() throws Exception {
+    public void getMethodNormal() {
         MockHttpServletRequest servletRequest = new MockHttpServletRequest();
         servletRequest.setMethod("patch");
-
-        assertEquals(HttpMethod.PATCH,
-                HttpMethod.getMethodIfSupported(servletRequest, EnumSet.allOf(HttpMethod.class)));
+        assertEquals(HttpMethod.PATCH, HttpMethod.getMethodIfSupported(servletRequest, EnumSet.allOf(HttpMethod.class)));
     }
 
     @Test
-    public void getMethodOverridden() throws Exception {
+    public void getMethodOverridden() {
         MockHttpServletRequest servletRequest = new MockHttpServletRequest();
         servletRequest.setMethod("post");
         servletRequest.addHeader(HttpHeader.METHOD_OVERRIDE, "patch");
-
-        assertEquals(HttpMethod.PATCH,
-                HttpMethod.getMethodIfSupported(servletRequest, EnumSet.allOf(HttpMethod.class)));
+        assertEquals(HttpMethod.PATCH, HttpMethod.getMethodIfSupported(servletRequest, EnumSet.allOf(HttpMethod.class)));
     }
 
     @Test
-    public void getMethodOverriddenDoesNotExist() throws Exception {
+    public void getMethodOverriddenDoesNotExist() {
         MockHttpServletRequest servletRequest = new MockHttpServletRequest();
         servletRequest.setMethod("post");
         servletRequest.addHeader(HttpHeader.METHOD_OVERRIDE, "test");
-
-        assertEquals(HttpMethod.POST,
-                HttpMethod.getMethodIfSupported(servletRequest, EnumSet.allOf(HttpMethod.class)));
-    }
-
-    @Test(expected = NullPointerException.class)
-    public void getMethodNull() throws Exception {
-        HttpMethod.getMethodIfSupported(null, EnumSet.allOf(HttpMethod.class));
+        assertEquals(HttpMethod.POST, HttpMethod.getMethodIfSupported(servletRequest, EnumSet.allOf(HttpMethod.class)));
     }
 
     @Test
-    public void getMethodNotSupported() throws Exception {
+    public void getMethodNull() {
+        Assertions.assertThrows(NullPointerException.class, () -> HttpMethod.getMethodIfSupported(null, EnumSet.allOf(HttpMethod.class)));
+    }
+
+    @Test
+    public void getMethodNotSupported() {
         MockHttpServletRequest servletRequest = new MockHttpServletRequest();
         servletRequest.setMethod("put");
-
-        assertEquals(null,
-                HttpMethod.getMethodIfSupported(servletRequest, EnumSet.noneOf(HttpMethod.class)));
+        assertNull(HttpMethod.getMethodIfSupported(servletRequest, EnumSet.noneOf(HttpMethod.class)));
     }
 
     @Test
-    public void getMethodRequestNotExists() throws Exception {
+    public void getMethodRequestNotExists() {
         MockHttpServletRequest servletRequest = new MockHttpServletRequest();
         servletRequest.setMethod("test");
-
-        assertEquals(null,
-                HttpMethod.getMethodIfSupported(servletRequest, EnumSet.noneOf(HttpMethod.class)));
+        assertNull(HttpMethod.getMethodIfSupported(servletRequest, EnumSet.noneOf(HttpMethod.class)));
     }
 }

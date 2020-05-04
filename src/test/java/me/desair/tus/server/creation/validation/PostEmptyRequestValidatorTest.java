@@ -1,15 +1,16 @@
 package me.desair.tus.server.creation.validation;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.fail;
-
 import me.desair.tus.server.HttpHeader;
 import me.desair.tus.server.HttpMethod;
 import me.desair.tus.server.exception.InvalidContentLengthException;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class PostEmptyRequestValidatorTest {
 
@@ -17,7 +18,7 @@ public class PostEmptyRequestValidatorTest {
 
     private MockHttpServletRequest servletRequest;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         servletRequest = new MockHttpServletRequest();
         validator = new PostEmptyRequestValidator();
@@ -37,40 +38,34 @@ public class PostEmptyRequestValidatorTest {
 
     @Test
     public void validateMissingContentLength() throws Exception {
-        //We don't set a content length header
-        //servletRequest.addHeader(HttpHeader.CONTENT_LENGTH, 3L);
-
         //When we validate the request
         try {
             validator.validate(HttpMethod.POST, servletRequest, null, null);
         } catch (Exception ex) {
             fail();
         }
-
-        //No Exception is thrown
+    //No Exception is thrown
     }
 
     @Test
     public void validateContentLengthZero() throws Exception {
         servletRequest.addHeader(HttpHeader.CONTENT_LENGTH, 0L);
-
         //When we validate the request
         try {
             validator.validate(HttpMethod.POST, servletRequest, null, null);
         } catch (Exception ex) {
             fail();
         }
-
-        //No Exception is thrown
+    //No Exception is thrown
     }
 
-    @Test(expected = InvalidContentLengthException.class)
+    @Test
     public void validateContentLengthNotZero() throws Exception {
-        servletRequest.addHeader(HttpHeader.CONTENT_LENGTH, 10L);
-
-        //When we validate the request
-        validator.validate(HttpMethod.POST, servletRequest, null, null);
-
-        //Expect a InvalidContentLengthException
+        Assertions.assertThrows(InvalidContentLengthException.class, () -> {
+            servletRequest.addHeader(HttpHeader.CONTENT_LENGTH, 10L);
+            //When we validate the request
+            validator.validate(HttpMethod.POST, servletRequest, null, null);
+            //Expect a InvalidContentLengthException
+        });
     }
 }
