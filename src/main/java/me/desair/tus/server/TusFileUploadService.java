@@ -3,10 +3,8 @@ package me.desair.tus.server;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.EnumSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.lang.reflect.Constructor;
+import java.util.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import me.desair.tus.server.checksum.ChecksumExtension;
@@ -17,12 +15,7 @@ import me.desair.tus.server.download.DownloadExtension;
 import me.desair.tus.server.exception.TusException;
 import me.desair.tus.server.expiration.ExpirationExtension;
 import me.desair.tus.server.termination.TerminationExtension;
-import me.desair.tus.server.upload.UUIDUploadIdFactory;
-import me.desair.tus.server.upload.UploadIdFactory;
-import me.desair.tus.server.upload.UploadInfo;
-import me.desair.tus.server.upload.UploadLock;
-import me.desair.tus.server.upload.UploadLockingService;
-import me.desair.tus.server.upload.UploadStorageService;
+import me.desair.tus.server.upload.*;
 import me.desair.tus.server.upload.cache.ThreadLocalCachedStorageAndLockingService;
 import me.desair.tus.server.upload.disk.DiskLockingService;
 import me.desair.tus.server.upload.disk.DiskStorageService;
@@ -52,6 +45,7 @@ public class TusFileUploadService {
     private boolean isChunkedTransferDecodingEnabled = false;
 
     public TusFileUploadService() {
+        // TODO remove since this should be provided by storage service
         String storagePath = FileUtils.getTempDirectoryPath() + File.separator + "tus";
         this.uploadStorageService = new DiskStorageService(idFactory, storagePath);
         this.uploadLockingService = new DiskLockingService(idFactory, storagePath);
@@ -478,6 +472,70 @@ public class TusFileUploadService {
             service.setIdFactory(this.idFactory);
             this.uploadStorageService = service;
             this.uploadLockingService = service;
+        }
+    }
+
+    /**
+     *
+     *
+     * @return Builder instance
+     */
+    public static Builder newBuilder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+
+        private UploadStorageService storage;
+        private UploadLockingService locking;
+        private UploadIdService id;
+        private Long maxUploadSize;
+        private Set<Class<TusExtension>> extensions = new HashSet<Class<TusExtension>>();
+
+        private Builder() {
+            // Nothing here
+        }
+
+
+        public TusFileUploadService build() {
+            TusFileUploadService service = new TusFileUploadService();
+            extensions.stream().map(Class::getConstructor).map(Constructor::newInstance)
+            return service;
+        }
+
+        public Builder withStorageService(UploadStorageService service) {
+            this.storage = service;
+            return this;
+        }
+
+        public Builder withLockingService(UploadLockingService service) {
+            this.locking = service;
+            return this;
+        }
+
+        public Builder withIdService(UploadIdService service) {
+            this.id = service;
+            return this;
+        }
+
+        public Builder withTusExtension(Class<TusExtension> extension) {
+            extensions.add(extension);
+            return this;
+        }
+
+        /**
+         * Configuration for core TUS protocol
+         *
+         * @see <a href="https://tus.io/protocols/resumable-upload.html#tus-max-size">tus-max-size</a>
+         * @param maxUploadSize max size of upload in bytes
+         * @return
+         */
+        public Builder withMaxUploadSize(Long maxUploadSize) {
+            if (maxUploadSize <= 0) {
+                throw new IllegalArgumentException("The max upload size must be bigger than 0");
+            }
+            this.maxUploadSize = maxUploadSize;
+            return this;
         }
     }
 
