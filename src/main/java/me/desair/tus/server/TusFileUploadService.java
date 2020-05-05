@@ -25,7 +25,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Constructor;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -53,6 +54,7 @@ public class TusFileUploadService {
         initFeatures();
     }
 
+    @Deprecated
     protected void initFeatures() {
         //The order of the features is important
         addTusExtension(new CoreProtocol());
@@ -491,7 +493,8 @@ public class TusFileUploadService {
         private UploadLockingService locking;
         private UploadIdService id;
         private Long maxUploadSize;
-        private Set<Class<TusExtension>> extensions = new HashSet<Class<TusExtension>>();
+        private Set<TusExtension> extensions = new HashSet<>();
+        private String endpoint;
 
         private Builder() {
             // Nothing here
@@ -500,7 +503,17 @@ public class TusFileUploadService {
 
         public TusFileUploadService build() {
             TusFileUploadService service = new TusFileUploadService();
-            //extensions.stream().map(Class::getConstructor).map(Constructor::newInstance)
+
+            // add user extension
+            extensions.stream().forEach(service::addTusExtension);
+            // ensure correct core extensions
+            service.addTusExtension(new CoreProtocol());
+            service.addTusExtension(new CreationExtension());
+            service.addTusExtension(new ChecksumExtension());
+            service.addTusExtension(new TerminationExtension());
+            service.addTusExtension(new ExpirationExtension());
+            service.addTusExtension(new ConcatenationExtension());
+
             return service;
         }
 
@@ -519,7 +532,35 @@ public class TusFileUploadService {
             return this;
         }
 
-        public Builder withTusExtension(Class<TusExtension> extension) {
+        /**
+         * The endpoint's path for the {@link TusFileUploadService}.
+         *
+         * For example for the URL https://host.tld/app/upload: /app is the deployments name and /upload is the endpoint.
+         * @param pathSegment the endpoint within a deployment where TUS requests will be processed
+         * @return Builder
+         */
+        public Builder withEndpoint(String pathSegment) {
+            this.endpoint = pathSegment;
+            return this;
+        }
+
+        /**
+         * Initializes {@link TusFileUploadService} with default local disk services {@link DiskStorageService} and
+         * {@link DiskLockingService}, as well as {@link UUIDUploadIdFactory} for Id creation.
+         * The uploaded files will be stored in a subfolder "tus" in the systems temporary directory.
+         */
+        public Builder withDefaultServices() {
+            Path tempPath = Paths.get(System.getProperty("java.io.tmpdir"));
+            Path storagePath = tempPath.resolve("tus");
+            log.warn("Using temporary folder for storage/locking. Path: {}", storagePath);
+
+            UUIDUploadIdFactory idFactory = new UUIDUploadIdFactory();
+            this.storage = new DiskStorageService(idFactory, storagePath.toString());
+            this.locking = new DiskLockingService(idFactory, storagePath.toString());
+            return this;
+        }
+
+        public Builder withTusExtension(TusExtension extension) {
             extensions.add(extension);
             return this;
         }
