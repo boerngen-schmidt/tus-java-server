@@ -1,5 +1,6 @@
 package me.desair.tus.server;
 
+import me.desair.tus.server.download.DownloadExtension;
 import me.desair.tus.server.exception.TusException;
 import me.desair.tus.server.upload.UploadInfo;
 import me.desair.tus.server.util.Utils;
@@ -57,7 +58,16 @@ public class ITTusFileUploadService {
     @BeforeEach
     public void setUp() {
         reset();
-        tusFileUploadService = new TusFileUploadService().withUploadURI(UPLOAD_URI).withStoragePath(storagePath.toAbsolutePath().toString()).withMaxUploadSize(1073741824L).withUploadExpirationPeriod(2L * 24 * 60 * 60 * 1000).withDownloadFeature().withChunkedTransferDecoding(true);
+        tusFileUploadService = TusFileUploadService.newBuilder()
+                .withServiceEndpointUri(UPLOAD_URI)
+                .withDefaultServices()
+                //.withStoragePath(storagePath.toAbsolutePath().toString())
+                .withMaxUploadSize(1073741824L)
+                .withUploadExpirationPeriod(2L * 24 * 60 * 60 * 1000)
+                .withTusExtension(DownloadExtension.class)
+                .withChunkedTransferDecoding(true)
+                .build();
+        // TODO set sporage Path in Storage
     }
 
     protected void reset() {
@@ -931,7 +941,12 @@ public class ITTusFileUploadService {
     public void testChunkedDecodingDisabledAndRegexUploadURI() throws Exception {
         String chunkedContent = "1B;test=value\r\nThis upload looks chunked, \r\n" + "D\r\nbut it's not!\r\n" + "\r\n0\r\n";
         //Create service without chunked decoding
-        tusFileUploadService = new TusFileUploadService().withUploadURI("/users/[0-9]+/files/upload").withStoragePath(storagePath.toAbsolutePath().toString()).withDownloadFeature();
+        tusFileUploadService = TusFileUploadService.newBuilder()
+                .withServiceEndpointUri("/users/[0-9]+/files/upload")
+                .withDefaultServices()
+                //.withStoragePath(storagePath.toAbsolutePath().toString())
+                .withTusExtension(DownloadExtension.class)
+                .build();
         //Create upload
         servletRequest.setMethod("POST");
         servletRequest.setRequestURI("/users/98765/files/upload");

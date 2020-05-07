@@ -14,7 +14,6 @@ import me.desair.tus.server.upload.disk.DiskLockingService;
 import me.desair.tus.server.upload.disk.DiskStorageService;
 import me.desair.tus.server.util.TusServletRequest;
 import me.desair.tus.server.util.TusServletResponse;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
@@ -22,12 +21,13 @@ import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * Helper class that implements the server side tus v1.0.0 upload protocol
@@ -45,25 +45,10 @@ public class TusFileUploadService {
     private final Set<HttpMethod> supportedHttpMethods = EnumSet.noneOf(HttpMethod.class);
     private boolean isThreadLocalCacheEnabled = false;
     private boolean isChunkedTransferDecodingEnabled = false;
+    private UploadIdService uploadIdService;
+    private String endpoint;
 
-    public TusFileUploadService() {
-        // TODO remove since this should be provided by storage service
-        String storagePath = FileUtils.getTempDirectoryPath() + File.separator + "tus";
-        this.uploadStorageService = new DiskStorageService(idFactory, storagePath);
-        this.uploadLockingService = new DiskLockingService(idFactory, storagePath);
-        initFeatures();
-    }
-
-    @Deprecated
-    protected void initFeatures() {
-        //The order of the features is important
-        addTusExtension(new CoreProtocol());
-        addTusExtension(new CreationExtension());
-        addTusExtension(new ChecksumExtension());
-        addTusExtension(new TerminationExtension());
-        addTusExtension(new ExpirationExtension());
-        addTusExtension(new ConcatenationExtension());
-    }
+    private TusFileUploadService() {}
 
     /**
      * Set the URI under which the main tus upload endpoint is hosted.
@@ -215,11 +200,10 @@ public class TusFileUploadService {
      * @param feature The custom extension implementation
      * @return The current service
      */
-    public TusFileUploadService addTusExtension(TusExtension feature) {
+    public void addTusExtension(TusExtension feature) {
         Validate.notNull(feature, "A custom feature cannot be null");
         enabledFeatures.put(feature.getName(), feature);
         updateSupportedHttpMethods();
-        return this;
     }
 
     /**
@@ -493,11 +477,32 @@ public class TusFileUploadService {
         private UploadLockingService locking;
         private UploadIdService id;
         private Long maxUploadSize;
-        private Set<TusExtension> extensions = new HashSet<>();
+        private Set<Class<? extends TusExtension>> userExtensions = new HashSet<>();
+        private Set<Class<? extends TusExtension>> coreExtensions;
         private String endpoint;
+        private Long expirePeriode;
+        private boolean chunkedTransferDecoding;
 
         private Builder() {
-            // Nothing here
+            // Set Core extension lasily
+            coreExtensions = Collections.unmodifiableSet(
+                    new HashSet<>(
+                            Arrays.asList(
+                                    CoreProtocol.class,
+                                    CreationExtension.class,
+                                    ChecksumExtension.class,
+                                    TerminationExtension.class,
+                                    ExpirationExtension.class,
+                                    ConcatenationExtension.class
+                            )));
+        }
+
+        private static TusExtension createTusExtension(Class<? extends TusExtension> clazz) {
+            try {
+                return clazz.getConstructor().newInstance();
+            } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                throw new IllegalStateException("Could not create instance for extension", e);
+            }
         }
 
 
@@ -505,14 +510,16 @@ public class TusFileUploadService {
             TusFileUploadService service = new TusFileUploadService();
 
             // add user extension
-            extensions.stream().forEach(service::addTusExtension);
-            // ensure correct core extensions
-            service.addTusExtension(new CoreProtocol());
-            service.addTusExtension(new CreationExtension());
-            service.addTusExtension(new ChecksumExtension());
-            service.addTusExtension(new TerminationExtension());
-            service.addTusExtension(new ExpirationExtension());
-            service.addTusExtension(new ConcatenationExtension());
+            Stream.of(userExtensions, coreExtensions).flatMap(Collection::stream)
+                    .map(Builder::createTusExtension)
+                    .forEach(service::addTusExtension);
+
+            service.uploadStorageService = this.storage;
+            service.uploadLockingService = this.locking;
+            service.uploadIdService = this.id;
+            service.endpoint = this.endpoint;
+            service.isChunkedTransferDecodingEnabled = this.chunkedTransferDecoding;
+            service.uploadStorageService.setMaxUploadSize(this.expirePeriode);
 
             return service;
         }
@@ -536,11 +543,11 @@ public class TusFileUploadService {
          * The endpoint's path for the {@link TusFileUploadService}.
          *
          * For example for the URL https://host.tld/app/upload: /app is the deployments name and /upload is the endpoint.
-         * @param pathSegment the endpoint within a deployment where TUS requests will be processed
+         * @param endpointUri the endpoint within a deployment where TUS requests will be processed
          * @return Builder
          */
-        public Builder withEndpoint(String pathSegment) {
-            this.endpoint = pathSegment;
+        public Builder withServiceEndpointUri(String endpointUri) {
+            this.endpoint = endpointUri;
             return this;
         }
 
@@ -560,8 +567,8 @@ public class TusFileUploadService {
             return this;
         }
 
-        public Builder withTusExtension(TusExtension extension) {
-            extensions.add(extension);
+        public Builder withTusExtension(Class<? extends TusExtension> extension) {
+            userExtensions.add(extension);
             return this;
         }
 
@@ -578,6 +585,17 @@ public class TusFileUploadService {
             }
             this.maxUploadSize = maxUploadSize;
             return this;
+        }
+
+        public Builder withUploadExpirationPeriod(long periode) {
+            this.expirePeriode = periode;
+            return this;
+        }
+
+        public Builder withChunkedTransferDecoding(boolean chunkedTransfer) {
+            this.chunkedTransferDecoding = chunkedTransfer;
+            return this;
+
         }
     }
 
