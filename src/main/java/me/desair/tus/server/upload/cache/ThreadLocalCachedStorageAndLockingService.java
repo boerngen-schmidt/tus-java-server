@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.util.Objects;
+import java.util.Optional;
 
 import me.desair.tus.server.exception.TusException;
 import me.desair.tus.server.exception.UploadNotFoundException;
@@ -46,7 +47,7 @@ public class ThreadLocalCachedStorageAndLockingService implements UploadLockingS
     }
 
     @Override
-    public UploadInfo getUploadInfo(UploadId id) throws IOException {
+    public Optional<UploadInfo> getUploadInfo(UploadId id) throws IOException {
         UploadInfo uploadInfo;
         WeakReference<UploadInfo> ref = uploadInfoCache.get();
         if (ref == null || (uploadInfo = ref.get()) == null || !id.equals(uploadInfo.getId())) {
@@ -57,13 +58,13 @@ public class ThreadLocalCachedStorageAndLockingService implements UploadLockingS
     }
 
     @Override
-    public UploadInfo getUploadInfo(String uploadUrl, String ownerKey) throws IOException {
+    public Optional<UploadInfo> getUploadInfo(String uploadUrl, String ownerKey) throws IOException {
         UploadInfo uploadInfo = getUploadInfo(idFactory.readUploadId(uploadUrl));
         if (uploadInfo == null || !Objects.equals(uploadInfo.getOwnerKey(), ownerKey)) {
             uploadInfo = storageServiceDelegate.getUploadInfo(uploadUrl, ownerKey);
             uploadInfoCache.set(new WeakReference<>(uploadInfo));
         }
-        return uploadInfo;
+        return Optional.of(uploadInfo);
     }
 
     @Override

@@ -3,6 +3,7 @@ package me.desair.tus.server.upload;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Optional;
 
 import me.desair.tus.server.exception.TusException;
 import me.desair.tus.server.exception.UploadNotFoundException;
@@ -19,7 +20,7 @@ public interface UploadStorageService {
      * @param ownerKey A key representing the owner of the upload
      * @return The upload info matching the given URL, or null when not found.
      */
-    UploadInfo getUploadInfo(String uploadUrl, String ownerKey) throws IOException;
+    Optional<UploadInfo> getUploadInfo(String uploadUrl, String ownerKey) throws IOException;
 
     /**
      * Method to retrieve the upload info by its ID
@@ -27,7 +28,7 @@ public interface UploadStorageService {
      * @return The matching upload info
      * @throws IOException When the service is not able to retrieve the upload information
      */
-    UploadInfo getUploadInfo(UploadId id) throws IOException;
+    Optional<UploadInfo> getUploadInfo(UploadId id) throws IOException;
 
     /**
      * The URI which is configured as the upload endpoint
