@@ -14,6 +14,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import me.desair.tus.server.exception.InvalidUploadOffsetException;
 import me.desair.tus.server.exception.TusException;
@@ -76,22 +77,23 @@ public class DiskStorageService extends AbstractDiskBasedService implements Uplo
     }
 
     @Override
-    public UploadInfo getUploadInfo(String uploadUrl, String ownerKey) throws IOException {
-        UploadInfo uploadInfo = getUploadInfo(idFactory.readUploadId(uploadUrl));
-        if (uploadInfo == null || !Objects.equals(uploadInfo.getOwnerKey(), ownerKey)) {
-            return null;
+    public Optional<UploadInfo> getUploadInfo(String uploadUrl, String ownerKey) throws IOException {
+        Optional<UploadInfo> uploadInfo = getUploadInfo(idFactory.readUploadId(uploadUrl));
+        if (!uploadInfo.isPresent() || !Objects.equals(uploadInfo.get().getOwnerKey(), ownerKey)) {
+            return Optional.empty();
         } else {
             return uploadInfo;
         }
     }
 
     @Override
-    public UploadInfo getUploadInfo(UploadId id) throws IOException {
+    public Optional<UploadInfo> getUploadInfo(UploadId id) throws IOException {
         try {
             Path infoPath = getInfoPath(id);
-            return Utils.readSerializable(infoPath, UploadInfo.class);
+            UploadInfo uploadInfo = Utils.readSerializable(infoPath, UploadInfo.class);
+            return Optional.of(uploadInfo);
         } catch (UploadNotFoundException e) {
-            return null;
+            return Optional.empty();
         }
     }
 
