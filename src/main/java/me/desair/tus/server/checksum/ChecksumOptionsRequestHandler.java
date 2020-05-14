@@ -6,7 +6,9 @@ import me.desair.tus.server.upload.UploadStorageService;
 import me.desair.tus.server.util.AbstractExtensionRequestHandler;
 import me.desair.tus.server.util.TusServletRequest;
 import me.desair.tus.server.util.TusServletResponse;
-import org.apache.commons.lang3.StringUtils;
+
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * The Tus-Checksum-Algorithm header MUST be included in the response to an OPTIONS request.
@@ -21,9 +23,8 @@ public class ChecksumOptionsRequestHandler extends AbstractExtensionRequestHandl
                         String ownerKey) {
 
         super.process(method, servletRequest, servletResponse, uploadStorageService, ownerKey);
-
-        servletResponse.setHeader(HttpHeader.TUS_CHECKSUM_ALGORITHM,
-                StringUtils.join(ChecksumAlgorithm.values(), ","));
+        String checksumAlgorithms = Stream.of(ChecksumAlgorithm.values()).map(ChecksumAlgorithm::getTusName).collect(Collectors.joining(","));
+        servletResponse.setHeader(HttpHeader.TUS_CHECKSUM_ALGORITHM, checksumAlgorithms);
     }
 
     @Override
