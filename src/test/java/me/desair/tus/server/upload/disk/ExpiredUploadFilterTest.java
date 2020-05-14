@@ -47,7 +47,7 @@ public class ExpiredUploadFilterTest {
         info.setOffset(2L);
         info.setLength(10L);
         info.updateExpiration(100L);
-        when(diskStorageService.getUploadInfo(eq(info.getId()))).thenReturn(info);
+        when(diskStorageService.getUploadInfo(eq(info.getId()))).thenReturn(java.util.Optional.of(info));
         when(uploadLockingService.isLocked(eq(info.getId()))).thenReturn(false);
         assertTrue(uploadFilter.accept(Paths.get(info.getId().toString())));
     }
@@ -66,7 +66,7 @@ public class ExpiredUploadFilterTest {
         info.setOffset(10L);
         info.setLength(10L);
         info.updateExpiration(100L);
-        when(diskStorageService.getUploadInfo(eq(info.getId()))).thenReturn(info);
+        when(diskStorageService.getUploadInfo(eq(info.getId()))).thenReturn(java.util.Optional.of(info));
         when(uploadLockingService.isLocked(eq(info.getId()))).thenReturn(false);
         //Completed uploads also expire
         assertTrue(uploadFilter.accept(Paths.get(info.getId().toString())));
@@ -79,7 +79,7 @@ public class ExpiredUploadFilterTest {
         info.setOffset(2L);
         info.setLength(10L);
         info.updateExpiration(172800000L);
-        when(diskStorageService.getUploadInfo(eq(info.getId()))).thenReturn(info);
+        when(diskStorageService.getUploadInfo(eq(info.getId()))).thenReturn(java.util.Optional.of(info));
         when(uploadLockingService.isLocked(eq(info.getId()))).thenReturn(false);
         assertFalse(uploadFilter.accept(Paths.get(info.getId().toString())));
     }
@@ -91,7 +91,7 @@ public class ExpiredUploadFilterTest {
         info.setOffset(8L);
         info.setLength(10L);
         info.updateExpiration(100L);
-        when(diskStorageService.getUploadInfo(eq(info.getId()))).thenReturn(info);
+        when(diskStorageService.getUploadInfo(eq(info.getId()))).thenReturn(java.util.Optional.of(info));
         when(uploadLockingService.isLocked(eq(info.getId()))).thenReturn(true);
         assertFalse(uploadFilter.accept(Paths.get(info.getId().toString())));
     }

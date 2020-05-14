@@ -1,20 +1,16 @@
 package me.desair.tus.server.upload.cache;
 
+import me.desair.tus.server.exception.TusException;
+import me.desair.tus.server.exception.UploadNotFoundException;
+import me.desair.tus.server.upload.*;
+import me.desair.tus.server.upload.concatenation.UploadConcatenationService;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.util.Objects;
-
-import me.desair.tus.server.exception.TusException;
-import me.desair.tus.server.exception.UploadNotFoundException;
-import me.desair.tus.server.upload.UploadId;
-import me.desair.tus.server.upload.UploadIdFactory;
-import me.desair.tus.server.upload.UploadInfo;
-import me.desair.tus.server.upload.UploadLock;
-import me.desair.tus.server.upload.UploadLockingService;
-import me.desair.tus.server.upload.UploadStorageService;
-import me.desair.tus.server.upload.concatenation.UploadConcatenationService;
+import java.util.Optional;
 
 /**
  * Combined implementation of {@link UploadStorageService} and {@link UploadLockingService}.
@@ -24,7 +20,7 @@ import me.desair.tus.server.upload.concatenation.UploadConcatenationService;
  */
 public class ThreadLocalCachedStorageAndLockingService implements UploadLockingService, UploadStorageService {
 
-    private final ThreadLocal<WeakReference<UploadInfo>> uploadInfoCache = new ThreadLocal<>();
+    private final ThreadLocal<WeakReference<Optional<UploadInfo>>> uploadInfoCache = new ThreadLocal<>();
     private final UploadLockingService lockingServiceDelegate;
     private final UploadStorageService storageServiceDelegate;
     private UploadIdFactory idFactory;
@@ -46,10 +42,10 @@ public class ThreadLocalCachedStorageAndLockingService implements UploadLockingS
     }
 
     @Override
-    public UploadInfo getUploadInfo(UploadId id) throws IOException {
-        UploadInfo uploadInfo;
-        WeakReference<UploadInfo> ref = uploadInfoCache.get();
-        if (ref == null || (uploadInfo = ref.get()) == null || !id.equals(uploadInfo.getId())) {
+    public Optional<UploadInfo> getUploadInfo(UploadId id) throws IOException {
+        Optional<UploadInfo> uploadInfo;
+        WeakReference<Optional<UploadInfo>> ref = uploadInfoCache.get();
+        if (ref == null || !(uploadInfo = ref.get()).isPresent() || !id.equals(uploadInfo.get().getId())) {
             uploadInfo = storageServiceDelegate.getUploadInfo(id);
             uploadInfoCache.set(new WeakReference<>(uploadInfo));
         }
@@ -57,9 +53,9 @@ public class ThreadLocalCachedStorageAndLockingService implements UploadLockingS
     }
 
     @Override
-    public UploadInfo getUploadInfo(String uploadUrl, String ownerKey) throws IOException {
-        UploadInfo uploadInfo = getUploadInfo(idFactory.readUploadId(uploadUrl));
-        if (uploadInfo == null || !Objects.equals(uploadInfo.getOwnerKey(), ownerKey)) {
+    public Optional<UploadInfo> getUploadInfo(String uploadUrl, String ownerKey) throws IOException {
+        Optional<UploadInfo> uploadInfo = getUploadInfo(idFactory.readUploadId(uploadUrl));
+        if (!uploadInfo.isPresent() || !Objects.equals(uploadInfo.get().getOwnerKey(), ownerKey)) {
             uploadInfo = storageServiceDelegate.getUploadInfo(uploadUrl, ownerKey);
             uploadInfoCache.set(new WeakReference<>(uploadInfo));
         }
@@ -69,7 +65,7 @@ public class ThreadLocalCachedStorageAndLockingService implements UploadLockingS
     @Override
     public void update(UploadInfo uploadInfo) throws IOException, UploadNotFoundException {
         storageServiceDelegate.update(uploadInfo);
-        uploadInfoCache.set(new WeakReference<>(uploadInfo));
+        uploadInfoCache.set(new WeakReference<>(Optional.of(uploadInfo)));
     }
 
     @Override
@@ -87,7 +83,7 @@ public class ThreadLocalCachedStorageAndLockingService implements UploadLockingS
     @Override
     public UploadInfo append(UploadInfo upload, InputStream inputStream) throws IOException, TusException {
         UploadInfo info = storageServiceDelegate.append(upload, inputStream);
-        uploadInfoCache.set(new WeakReference<>(info));
+        uploadInfoCache.set(new WeakReference<>(Optional.of(info)));
         return info;
     }
 
@@ -104,7 +100,7 @@ public class ThreadLocalCachedStorageAndLockingService implements UploadLockingS
     @Override
     public UploadInfo create(UploadInfo info, String ownerKey) throws IOException {
         UploadInfo uploadInfo = storageServiceDelegate.create(info, ownerKey);
-        uploadInfoCache.set(new WeakReference<>(uploadInfo));
+        uploadInfoCache.set(new WeakReference<>(Optional.of(uploadInfo)));
         return uploadInfo;
 
     }
@@ -122,7 +118,7 @@ public class ThreadLocalCachedStorageAndLockingService implements UploadLockingS
     @Override
     public void copyUploadTo(UploadInfo info, OutputStream outputStream) throws UploadNotFoundException, IOException {
         storageServiceDelegate.copyUploadTo(info, outputStream);
-        uploadInfoCache.set(new WeakReference<>(info));
+        uploadInfoCache.set(new WeakReference<>(Optional.of(info)));
     }
 
     @Override
@@ -137,7 +133,7 @@ public class ThreadLocalCachedStorageAndLockingService implements UploadLockingS
     public void removeLastNumberOfBytes(UploadInfo uploadInfo, long byteCount) throws UploadNotFoundException,
                                                                                       IOException {
         storageServiceDelegate.removeLastNumberOfBytes(uploadInfo, byteCount);
-        uploadInfoCache.set(new WeakReference<>(uploadInfo));
+        uploadInfoCache.set(new WeakReference<>(Optional.of(uploadInfo)));
     }
 
     @Override
@@ -186,7 +182,7 @@ public class ThreadLocalCachedStorageAndLockingService implements UploadLockingS
     }
 
     private void cleanupCache() {
-        WeakReference<UploadInfo> ref = uploadInfoCache.get();
+        WeakReference<Optional<UploadInfo>> ref = uploadInfoCache.get();
         if (ref != null) {
             uploadInfoCache.remove();
             ref.clear();

@@ -1,10 +1,5 @@
 package me.desair.tus.server.download;
 
-import java.io.IOException;
-import java.util.Objects;
-
-import javax.servlet.http.HttpServletResponse;
-
 import me.desair.tus.server.HttpHeader;
 import me.desair.tus.server.HttpMethod;
 import me.desair.tus.server.exception.TusException;
@@ -14,6 +9,11 @@ import me.desair.tus.server.upload.UploadStorageService;
 import me.desair.tus.server.util.AbstractRequestHandler;
 import me.desair.tus.server.util.TusServletRequest;
 import me.desair.tus.server.util.TusServletResponse;
+
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Send the uploaded bytes of finished uploads
@@ -32,25 +32,24 @@ public class DownloadGetRequestHandler extends AbstractRequestHandler {
                         TusServletResponse servletResponse, UploadStorageService uploadStorageService,
                         String ownerKey) throws IOException, TusException {
 
-        UploadInfo info = uploadStorageService.getUploadInfo(servletRequest.getRequestURI(), ownerKey);
-        if (info == null || info.isUploadInProgress()) {
-            throw new UploadInProgressException("Upload " + servletRequest.getRequestURI() + " is still in progress "
-                    + "and cannot be downloaded yet");
-        } else {
+        Optional<UploadInfo> uploadInfoOptional = uploadStorageService.getUploadInfo(servletRequest.getRequestURI(), ownerKey);
+        UploadInfo uploadInfo = uploadInfoOptional.filter(i -> !i.isUploadInProgress())
+                .orElseThrow(() -> new UploadInProgressException("Upload " + servletRequest.getRequestURI() + " is still in progress "
+                        + "and cannot be downloaded yet"));
 
-            servletResponse.setHeader(HttpHeader.CONTENT_LENGTH, Objects.toString(info.getLength()));
+        // We got an uploadInfo and Upload is not in progress
+        servletResponse.setHeader(HttpHeader.CONTENT_LENGTH, Objects.toString(uploadInfo.getLength()));
 
-            servletResponse.setHeader(HttpHeader.CONTENT_DISPOSITION,
-                    String.format(CONTENT_DISPOSITION_FORMAT, info.getFileName()));
+        servletResponse.setHeader(HttpHeader.CONTENT_DISPOSITION,
+                String.format(CONTENT_DISPOSITION_FORMAT, uploadInfo.getFileName()));
 
-            servletResponse.setHeader(HttpHeader.CONTENT_TYPE, info.getFileMimeType());
+        servletResponse.setHeader(HttpHeader.CONTENT_TYPE, uploadInfo.getFileMimeType());
 
-            if (info.hasMetadata()) {
-                servletResponse.setHeader(HttpHeader.UPLOAD_METADATA, info.getEncodedMetadata());
-            }
-
-            uploadStorageService.copyUploadTo(info, servletResponse.getOutputStream());
+        if (uploadInfo.hasMetadata()) {
+            servletResponse.setHeader(HttpHeader.UPLOAD_METADATA, uploadInfo.getEncodedMetadata());
         }
+
+        uploadStorageService.copyUploadTo(uploadInfo, servletResponse.getOutputStream());
 
         servletResponse.setStatus(HttpServletResponse.SC_OK);
     }

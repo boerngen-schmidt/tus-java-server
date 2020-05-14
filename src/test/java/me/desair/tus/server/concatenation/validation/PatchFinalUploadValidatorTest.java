@@ -65,9 +65,9 @@ public class PatchFinalUploadValidatorTest {
         UploadInfo info3 = new UploadInfo();
         info3.setId(new UploadId(UUID.randomUUID()));
         info3.setUploadType(null);
-        when(uploadStorageService.getUploadInfo(eq(info1.getId().toString()), nullable(String.class))).thenReturn(info1);
-        when(uploadStorageService.getUploadInfo(eq(info2.getId().toString()), nullable(String.class))).thenReturn(info2);
-        when(uploadStorageService.getUploadInfo(eq(info3.getId().toString()), nullable(String.class))).thenReturn(info3);
+        when(uploadStorageService.getUploadInfo(eq(info1.getId().toString()), nullable(String.class))).thenReturn(java.util.Optional.of(info1));
+        when(uploadStorageService.getUploadInfo(eq(info2.getId().toString()), nullable(String.class))).thenReturn(java.util.Optional.of(info2));
+        when(uploadStorageService.getUploadInfo(eq(info3.getId().toString()), nullable(String.class))).thenReturn(java.util.Optional.of(info3));
         //When we validate the requests
         try {
             servletRequest.setRequestURI(info1.getId().toString());
@@ -83,7 +83,7 @@ public class PatchFinalUploadValidatorTest {
     }
 
     @Test
-    public void testValidNotFound() throws Exception {
+    public void testValidNotFound() {
         try {
             //When we validate the request
             servletRequest.setRequestURI("/upload/test");
@@ -94,12 +94,12 @@ public class PatchFinalUploadValidatorTest {
     }
 
     @Test
-    public void testInvalidFinal() throws Exception {
+    public void testInvalidFinal() {
         Assertions.assertThrows(PatchOnFinalUploadNotAllowedException.class, () -> {
             UploadInfo info1 = new UploadInfo();
             info1.setId(new UploadId(UUID.randomUUID()));
             info1.setUploadType(UploadType.CONCATENATED);
-            when(uploadStorageService.getUploadInfo(eq(info1.getId().toString()), nullable(String.class))).thenReturn(info1);
+            when(uploadStorageService.getUploadInfo(eq(info1.getId().toString()), nullable(String.class))).thenReturn(java.util.Optional.of(info1));
             //When we validate the request
             servletRequest.setRequestURI(info1.getId().toString());
             validator.validate(HttpMethod.PATCH, servletRequest, uploadStorageService, null);

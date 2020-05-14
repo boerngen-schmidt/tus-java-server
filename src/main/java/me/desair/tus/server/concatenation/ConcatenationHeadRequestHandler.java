@@ -1,8 +1,5 @@
 package me.desair.tus.server.concatenation;
 
-import java.io.IOException;
-import java.util.Objects;
-
 import me.desair.tus.server.HttpHeader;
 import me.desair.tus.server.HttpMethod;
 import me.desair.tus.server.exception.TusException;
@@ -12,6 +9,10 @@ import me.desair.tus.server.upload.UploadType;
 import me.desair.tus.server.util.AbstractRequestHandler;
 import me.desair.tus.server.util.TusServletRequest;
 import me.desair.tus.server.util.TusServletResponse;
+
+import java.io.IOException;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * The response to a HEAD request for a upload SHOULD NOT contain the Upload-Offset header unless the
@@ -35,8 +36,13 @@ public class ConcatenationHeadRequestHandler extends AbstractRequestHandler {
                         TusServletResponse servletResponse, UploadStorageService uploadStorageService,
                         String ownerKey) throws IOException, TusException {
 
-        UploadInfo uploadInfo = uploadStorageService.getUploadInfo(servletRequest.getRequestURI(), ownerKey);
+        Optional<UploadInfo> uploadInfoOptional = uploadStorageService.getUploadInfo(servletRequest.getRequestURI(), ownerKey);
 
+        if (!uploadInfoOptional.isPresent()) {
+            return;
+        }
+
+        UploadInfo uploadInfo = uploadInfoOptional.get();
         if (!UploadType.REGULAR.equals(uploadInfo.getUploadType())) {
             servletResponse.setHeader(HttpHeader.UPLOAD_CONCAT, uploadInfo.getUploadConcatHeaderValue());
         }

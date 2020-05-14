@@ -19,6 +19,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -63,7 +64,7 @@ public class CreationPatchRequestHandlerTest {
         UploadInfo info = new UploadInfo();
         info.setOffset(2L);
         info.setLength(10L);
-        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(info);
+        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(java.util.Optional.of(info));
         servletRequest.addHeader(HttpHeader.UPLOAD_LENGTH, 10L);
         handler.process(HttpMethod.HEAD, new TusServletRequest(servletRequest), new TusServletResponse(servletResponse), uploadStorageService, null);
         verify(uploadStorageService, never()).update(info);
@@ -74,7 +75,7 @@ public class CreationPatchRequestHandlerTest {
         UploadInfo info = new UploadInfo();
         info.setOffset(2L);
         info.setLength(10L);
-        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(info);
+        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(java.util.Optional.of(info));
         //servletRequest.addHeader(HttpHeader.UPLOAD_LENGTH, 10L);
         handler.process(HttpMethod.HEAD, new TusServletRequest(servletRequest), new TusServletResponse(servletResponse), uploadStorageService, null);
         verify(uploadStorageService, never()).update(info);
@@ -85,7 +86,7 @@ public class CreationPatchRequestHandlerTest {
         UploadInfo info = new UploadInfo();
         info.setOffset(2L);
         info.setLength(null);
-        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(info);
+        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(java.util.Optional.of(info));
         servletRequest.addHeader(HttpHeader.UPLOAD_LENGTH, 10L);
         handler.process(HttpMethod.HEAD, new TusServletRequest(servletRequest), new TusServletResponse(servletResponse), uploadStorageService, null);
         verify(uploadStorageService, times(1)).update(info);
@@ -97,7 +98,7 @@ public class CreationPatchRequestHandlerTest {
         UploadInfo info = new UploadInfo();
         info.setOffset(2L);
         info.setLength(null);
-        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(info);
+        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(java.util.Optional.of(info));
         //servletRequest.addHeader(HttpHeader.UPLOAD_LENGTH, 10L);
         handler.process(HttpMethod.HEAD, new TusServletRequest(servletRequest), new TusServletResponse(servletResponse), uploadStorageService, null);
         verify(uploadStorageService, never()).update(info);
@@ -105,7 +106,7 @@ public class CreationPatchRequestHandlerTest {
 
     @Test
     public void processNotFound() throws Exception {
-        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(null);
+        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(Optional.empty());
         handler.process(HttpMethod.PATCH, new TusServletRequest(servletRequest), new TusServletResponse(servletResponse), uploadStorageService, null);
     }
 
@@ -114,7 +115,7 @@ public class CreationPatchRequestHandlerTest {
         UploadInfo info = new UploadInfo();
         info.setId(new UploadId(UUID.randomUUID()));
         info.setOffset(10L);
-        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(info);
+        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(java.util.Optional.of(info));
         servletRequest.addHeader(HttpHeader.UPLOAD_LENGTH, 10L);
         doThrow(new UploadNotFoundException("test")).when(uploadStorageService).update(any(UploadInfo.class));
         handler.process(HttpMethod.PATCH, new TusServletRequest(servletRequest), new TusServletResponse(servletResponse), uploadStorageService, null);

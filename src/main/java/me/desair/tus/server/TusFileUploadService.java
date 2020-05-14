@@ -40,7 +40,6 @@ public class TusFileUploadService {
 
     private UploadStorageService uploadStorageService;
     private UploadLockingService uploadLockingService;
-    private UploadIdFactory idFactory = new UUIDUploadIdFactory();
     private final LinkedHashMap<String, TusExtension> enabledFeatures = new LinkedHashMap<>();
     private final Set<HttpMethod> supportedHttpMethods = EnumSet.noneOf(HttpMethod.class);
     private boolean isThreadLocalCacheEnabled = false;
@@ -51,144 +50,14 @@ public class TusFileUploadService {
     private TusFileUploadService() {}
 
     /**
-     * Set the URI under which the main tus upload endpoint is hosted.
-     * Optionally, this URI may contain regex parameters in order to support endpoints that contain
-     * URL parameters, for example /users/[0-9]+/files/upload
-     *
-     * @param uploadURI The URI of the main tus upload endpoint
-     * @return The current service
-     */
-    public TusFileUploadService withUploadURI(String uploadURI) {
-        this.idFactory.setUploadURI(uploadURI);
-        return this;
-    }
-
-    /**
-     * Specify the maximum number of bytes that can be uploaded per upload.
-     * If you don't call this method, the maximum number of bytes is Long.MAX_VALUE.
-     *
-     * @param maxUploadSize The maximum upload length that is allowed
-     * @return The current service
-     */
-    public TusFileUploadService withMaxUploadSize(Long maxUploadSize) {
-        Validate.exclusiveBetween(0, Long.MAX_VALUE, maxUploadSize, "The max upload size must be bigger than 0");
-        this.uploadStorageService.setMaxUploadSize(maxUploadSize);
-        return this;
-    }
-
-    /**
-     * Provide a custom {@link UploadIdFactory} implementation that should be used to generate identifiers for
-     * the different uploads. Example implementation are {@link me.desair.tus.server.upload.UUIDUploadIdFactory} and
-     * {@link me.desair.tus.server.upload.TimeBasedUploadIdFactory}.
-     *
-     * @param uploadIdFactory The custom {@link UploadIdFactory} implementation
-     * @return The current service
-     */
-    public TusFileUploadService withUploadIdFactory(UploadIdFactory uploadIdFactory) {
-        Validate.notNull(uploadIdFactory, "The UploadIdFactory cannot be null");
-        String previousUploadURI = this.idFactory.getUploadURI();
-        this.idFactory = uploadIdFactory;
-        this.idFactory.setUploadURI(previousUploadURI);
-        this.uploadStorageService.setIdFactory(this.idFactory);
-        this.uploadLockingService.setIdFactory(this.idFactory);
-        return this;
-    }
-
-    /**
-     * Provide a custom {@link UploadStorageService} implementation that should be used to store uploaded bytes and
-     * metadata ({@link UploadInfo}).
-     *
-     * @param uploadStorageService The custom {@link UploadStorageService} implementation
-     * @return The current service
-     */
-    public TusFileUploadService withUploadStorageService(UploadStorageService uploadStorageService) {
-        Validate.notNull(uploadStorageService, "The UploadStorageService cannot be null");
-        //Copy over any previous configuration
-        uploadStorageService.setMaxUploadSize(this.uploadStorageService.getMaxUploadSize());
-        uploadStorageService.setUploadExpirationPeriod(this.uploadStorageService.getUploadExpirationPeriod());
-        uploadStorageService.setIdFactory(this.idFactory);
-        //Update the upload storage service
-        this.uploadStorageService = uploadStorageService;
-        prepareCacheIfEnabled();
-        return this;
-    }
-
-    /**
-     * Provide a custom {@link UploadLockingService} implementation that should be used when processing uploads.
-     * The upload locking service is responsible for locking an upload that is being processed so that it cannot
-     * be corrupted by simultaneous or delayed requests.
-     *
-     * @param uploadLockingService The {@link UploadLockingService} implementation to use
-     * @return The current service
-     */
-    public TusFileUploadService withUploadLockingService(UploadLockingService uploadLockingService) {
-        Validate.notNull(uploadLockingService, "The UploadStorageService cannot be null");
-        uploadLockingService.setIdFactory(this.idFactory);
-        //Update the upload storage service
-        this.uploadLockingService = uploadLockingService;
-        prepareCacheIfEnabled();
-        return this;
-    }
-
-    /**
-     * If you're using the default file system-based storage service, you can use this method to
-     * specify the path where to store the uploaded bytes and upload information.
-     *
-     * @param storagePath The file system path where uploads can be stored (temporarily)
-     * @return The current service
-     */
-    public TusFileUploadService withStoragePath(String storagePath) {
-        Validate.notBlank(storagePath, "The storage path cannot be blank");
-        withUploadStorageService(new DiskStorageService(storagePath));
-        withUploadLockingService(new DiskLockingService(storagePath));
-        prepareCacheIfEnabled();
-        return this;
-    }
-
-    /**
      * Enable or disable a thread-local based cache of upload data. This can reduce the load
      * on the storage backends. By default this cache is disabled.
      * @param isEnabled True if the cache should be enabled, false otherwise
-     * @return The current service
+     * @return The builder
+     * @deprecated
      */
     public TusFileUploadService withThreadLocalCache(boolean isEnabled) {
         this.isThreadLocalCacheEnabled = isEnabled;
-        prepareCacheIfEnabled();
-        return this;
-    }
-
-    /**
-     * Instruct this service to (not) decode any requests with Transfer-Encoding value "chunked".
-     * Use this method in case the web container in which this service is running does not decode
-     * chunked transfers itself. By default, chunked decoding is disabled.
-     *
-     * @param isEnabled True if chunked requests should be decoded, false otherwise.
-     * @return The current service
-     */
-    public TusFileUploadService withChunkedTransferDecoding(boolean isEnabled) {
-        isChunkedTransferDecodingEnabled = isEnabled;
-        return this;
-    }
-
-    /**
-     * You can set the number of milliseconds after which an upload is considered as expired and available for cleanup.
-     *
-     * @param expirationPeriod The number of milliseconds after which an upload expires and can be removed
-     * @return The current service
-     */
-    public TusFileUploadService withUploadExpirationPeriod(Long expirationPeriod) {
-        uploadStorageService.setUploadExpirationPeriod(expirationPeriod);
-        return this;
-    }
-
-    /**
-     * Enable the unofficial `download` extension that also allows you to download uploaded bytes.
-     * By default this feature is disabled.
-     *
-     * @return The current service
-     */
-    public TusFileUploadService withDownloadFeature() {
-        addTusExtension(new DownloadExtension());
         return this;
     }
 
@@ -198,7 +67,6 @@ public class TusFileUploadService {
      * within your application for the user doing the upload.
      *
      * @param feature The custom extension implementation
-     * @return The current service
      */
     public void addTusExtension(TusExtension feature) {
         Validate.notNull(feature, "A custom feature cannot be null");
@@ -212,15 +80,13 @@ public class TusFileUploadService {
      * You cannot disable the "core" feature.
      *
      * @param extensionName The name of the extension to disable
-     * @return The current service
      */
-    public TusFileUploadService disableTusExtension(String extensionName) {
+    public void disableTusExtension(String extensionName) {
         Validate.notNull(extensionName, "The extension name cannot be null");
         Validate.isTrue(!StringUtils.equals("core", extensionName), "The core protocol cannot be disabled");
 
         enabledFeatures.remove(extensionName);
         updateSupportedHttpMethods();
-        return this;
     }
 
     /**
@@ -324,7 +190,7 @@ public class TusFileUploadService {
      * @throws IOException  When retrieving the upload information fails
      * @throws TusException When the upload is still in progress or cannot be found
      */
-    public UploadInfo getUploadInfo(String uploadURI) throws IOException, TusException {
+    public Optional<UploadInfo> getUploadInfo(String uploadURI) throws IOException, TusException {
         return getUploadInfo(uploadURI, null);
     }
 
@@ -337,7 +203,7 @@ public class TusFileUploadService {
      * @throws IOException  When retrieving the upload information fails
      * @throws TusException When the upload is still in progress or cannot be found
      */
-    public UploadInfo getUploadInfo(String uploadURI, String ownerKey) throws IOException, TusException {
+    public Optional<UploadInfo> getUploadInfo(String uploadURI, String ownerKey) throws IOException, TusException {
         try (UploadLock lock = uploadLockingService.lockUploadByUri(uploadURI)) {
 
             return uploadStorageService.getUploadInfo(uploadURI, ownerKey);
@@ -363,9 +229,9 @@ public class TusFileUploadService {
      */
     public void deleteUpload(String uploadURI, String ownerKey) throws IOException, TusException {
         try (UploadLock lock = uploadLockingService.lockUploadByUri(uploadURI)) {
-            UploadInfo uploadInfo = uploadStorageService.getUploadInfo(uploadURI, ownerKey);
-            if (uploadInfo != null) {
-                uploadStorageService.terminateUpload(uploadInfo);
+            Optional<UploadInfo> uploadInfo = uploadStorageService.getUploadInfo(uploadURI, ownerKey);
+            if (uploadInfo.isPresent()) {
+                uploadStorageService.terminateUpload(uploadInfo.get());
             }
         }
     }
@@ -433,8 +299,8 @@ public class TusFileUploadService {
             }
 
             //Since an error occurred, the bytes we have written are probably not valid. So remove them.
-            UploadInfo uploadInfo = uploadStorageService.getUploadInfo(request.getRequestURI(), ownerKey);
-            uploadStorageService.removeLastNumberOfBytes(uploadInfo, request.getBytesRead());
+            Optional<UploadInfo> uploadInfo = uploadStorageService.getUploadInfo(request.getRequestURI(), ownerKey);
+            uploadStorageService.removeLastNumberOfBytes(uploadInfo.get(), request.getBytesRead());
 
         } catch (TusException ex) {
             log.warn("An exception occurred while handling another exception", ex);
@@ -447,18 +313,6 @@ public class TusFileUploadService {
         supportedHttpMethods.clear();
         for (TusExtension tusFeature : enabledFeatures.values()) {
             supportedHttpMethods.addAll(tusFeature.getMinimalSupportedHttpMethods());
-        }
-    }
-
-    private void prepareCacheIfEnabled() {
-        if (isThreadLocalCacheEnabled && uploadStorageService != null && uploadLockingService != null) {
-            ThreadLocalCachedStorageAndLockingService service =
-                    new ThreadLocalCachedStorageAndLockingService(
-                            uploadStorageService,
-                            uploadLockingService);
-            service.setIdFactory(this.idFactory);
-            this.uploadStorageService = service;
-            this.uploadLockingService = service;
         }
     }
 
@@ -519,21 +373,44 @@ public class TusFileUploadService {
             service.uploadIdService = this.id;
             service.endpoint = this.endpoint;
             service.isChunkedTransferDecodingEnabled = this.chunkedTransferDecoding;
-            service.uploadStorageService.setMaxUploadSize(this.expirePeriode);
-
+            service.uploadStorageService.setMaxUploadSize(this.maxUploadSize);
+            service.uploadStorageService.setUploadExpirationPeriod(this.expirePeriode);
             return service;
         }
 
+        /**
+         * Provide a custom {@link UploadStorageService} implementation that should be used to store uploaded bytes and
+         * metadata ({@link UploadInfo}).
+         *
+         * @param service The custom {@link UploadStorageService} implementation
+         * @return The builder
+         */
         public Builder withStorageService(UploadStorageService service) {
             this.storage = service;
             return this;
         }
 
+        /**
+         * Provide a custom {@link UploadLockingService} implementation that should be used when processing uploads.
+         * The upload locking service is responsible for locking an upload that is being processed so that it cannot
+         * be corrupted by simultaneous or delayed requests.
+         *
+         * @param service The {@link UploadLockingService} implementation to use
+         * @return The builder
+         */
         public Builder withLockingService(UploadLockingService service) {
             this.locking = service;
             return this;
         }
 
+        /**
+         * Provide a custom {@link UploadIdService} implementation that should be used to generate identifiers for
+         * the different uploads. Example implementation are {@link me.desair.tus.server.upload.UUID4UploadIdService} and
+         * {@link me.desair.tus.server.upload.TimeBasedUploadIdFactory}.
+         *
+         * @param service The custom {@link UploadIdService} implementation
+         * @return The builder
+         */
         public Builder withIdService(UploadIdService service) {
             this.id = service;
             return this;
@@ -542,9 +419,9 @@ public class TusFileUploadService {
         /**
          * The endpoint's path for the {@link TusFileUploadService}.
          *
-         * For example for the URL https://host.tld/app/upload: /app is the deployments name and /upload is the endpoint.
+         * For example for the URL https://host.tld/app/upload: /app is the deployment's name and /upload is the endpoint.
          * @param endpointUri the endpoint within a deployment where TUS requests will be processed
-         * @return Builder
+         * @return The builder
          */
         public Builder withServiceEndpointUri(String endpointUri) {
             this.endpoint = endpointUri;
@@ -573,11 +450,11 @@ public class TusFileUploadService {
         }
 
         /**
-         * Configuration for core TUS protocol
+         * Specify the maximum number of bytes that can be uploaded per upload.
+         * If you don't call this method, the maximum number of bytes is Long.MAX_VALUE.
          *
-         * @see <a href="https://tus.io/protocols/resumable-upload.html#tus-max-size">tus-max-size</a>
-         * @param maxUploadSize max size of upload in bytes
-         * @return
+         * @param maxUploadSize The maximum upload length that is allowed
+         * @return The builer
          */
         public Builder withMaxUploadSize(Long maxUploadSize) {
             if (maxUploadSize <= 0) {
@@ -587,13 +464,27 @@ public class TusFileUploadService {
             return this;
         }
 
-        public Builder withUploadExpirationPeriod(long periode) {
-            this.expirePeriode = periode;
+        /**
+         * You can set the number of milliseconds after which an upload is considered as expired and available for cleanup.
+         *
+         * @param expirationPeriod The number of milliseconds after which an upload expires and can be removed
+         * @return The builder
+         */
+        public Builder withUploadExpirationPeriod(long expirationPeriod) {
+            this.expirePeriode = expirationPeriod;
             return this;
         }
 
-        public Builder withChunkedTransferDecoding(boolean chunkedTransfer) {
-            this.chunkedTransferDecoding = chunkedTransfer;
+        /**
+         * Instruct this service to (not) decode any requests with Transfer-Encoding value "chunked".
+         * Use this method in case the web container in which this service is running does not decode
+         * chunked transfers itself. By default, chunked decoding is disabled.
+         *
+         * @param doChunkedTransferDecoding True if chunked requests should be decoded, false otherwise.
+         * @return The builder
+         */
+        public Builder withChunkedTransferDecoding(boolean doChunkedTransferDecoding) {
+            this.chunkedTransferDecoding = doChunkedTransferDecoding;
             return this;
 
         }

@@ -1,7 +1,5 @@
 package me.desair.tus.server.expiration;
 
-import java.io.IOException;
-
 import me.desair.tus.server.HttpHeader;
 import me.desair.tus.server.HttpMethod;
 import me.desair.tus.server.exception.TusException;
@@ -11,6 +9,9 @@ import me.desair.tus.server.util.AbstractRequestHandler;
 import me.desair.tus.server.util.TusServletRequest;
 import me.desair.tus.server.util.TusServletResponse;
 import org.apache.commons.lang3.StringUtils;
+
+import java.io.IOException;
+import java.util.Optional;
 
 /**
  * The Upload-Expires response header indicates the time after which the unfinished upload expires. This header MUST
@@ -40,14 +41,14 @@ public class ExpirationRequestHandler extends AbstractRequestHandler {
         }
 
         Long expirationPeriod = uploadStorageService.getUploadExpirationPeriod();
-        UploadInfo uploadInfo = uploadStorageService.getUploadInfo(uploadUri, ownerKey);
+        Optional<UploadInfo> uploadInfoOptional = uploadStorageService.getUploadInfo(uploadUri, ownerKey);
 
         // The Upload-Expires response header MUST be included in every PATCH response if the upload is going to expire.
         // If the expiration is known at the creation, the Upload-Expires header MUST be included in the response to
         // the initial POST request. Its value MAY change over time.
 
-        if (expirationPeriod != null && expirationPeriod > 0 && uploadInfo != null) {
-
+        if (expirationPeriod != null && expirationPeriod > 0 && uploadInfoOptional.isPresent()) {
+            UploadInfo uploadInfo = uploadInfoOptional.get();
             uploadInfo.updateExpiration(expirationPeriod);
             uploadStorageService.update(uploadInfo);
 

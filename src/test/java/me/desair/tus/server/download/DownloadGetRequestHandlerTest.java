@@ -21,6 +21,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.OutputStream;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -69,7 +70,7 @@ public class DownloadGetRequestHandlerTest {
         info.setOffset(10L);
         info.setLength(10L);
         info.setEncodedMetadata("name dGVzdC5qcGc=,type aW1hZ2UvanBlZw==");
-        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(info);
+        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(java.util.Optional.of(info));
 
         handler.process(HttpMethod.GET, new TusServletRequest(servletRequest),
                 new TusServletResponse(servletResponse), uploadStorageService, null);
@@ -93,7 +94,7 @@ public class DownloadGetRequestHandlerTest {
         info.setId(id);
         info.setOffset(10L);
         info.setLength(10L);
-        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(info);
+        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(java.util.Optional.of(info));
         handler.process(HttpMethod.GET, new TusServletRequest(servletRequest), new TusServletResponse(servletResponse), uploadStorageService, null);
         verify(uploadStorageService, times(1)).copyUploadTo(any(UploadInfo.class), any(OutputStream.class));
         assertThat(servletResponse.getStatus(), is(HttpServletResponse.SC_OK));
@@ -111,7 +112,7 @@ public class DownloadGetRequestHandlerTest {
             info.setOffset(8L);
             info.setLength(10L);
             info.setEncodedMetadata("name dGVzdC5qcGc=,type aW1hZ2UvanBlZw==");
-            when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(info);
+            when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(java.util.Optional.of(info));
             handler.process(HttpMethod.GET, new TusServletRequest(servletRequest), new TusServletResponse(servletResponse), uploadStorageService, null);
         });
     }
@@ -119,7 +120,7 @@ public class DownloadGetRequestHandlerTest {
     @Test
     public void testWithUnknownUpload() {
         Assertions.assertThrows(UploadInProgressException.class, () -> {
-            when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(null);
+            when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(Optional.empty());
             handler.process(HttpMethod.GET, new TusServletRequest(servletRequest), new TusServletResponse(servletResponse), uploadStorageService, null);
             verify(uploadStorageService, never()).copyUploadTo(any(UploadInfo.class), any(OutputStream.class));
             assertThat(servletResponse.getStatus(), is(HttpServletResponse.SC_NO_CONTENT));
