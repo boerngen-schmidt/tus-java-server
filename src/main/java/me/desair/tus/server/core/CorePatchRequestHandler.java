@@ -1,10 +1,5 @@
 package me.desair.tus.server.core;
 
-import java.io.IOException;
-import java.util.Objects;
-
-import javax.servlet.http.HttpServletResponse;
-
 import me.desair.tus.server.HttpHeader;
 import me.desair.tus.server.HttpMethod;
 import me.desair.tus.server.exception.TusException;
@@ -16,6 +11,11 @@ import me.desair.tus.server.util.TusServletRequest;
 import me.desair.tus.server.util.TusServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * The Server SHOULD accept PATCH requests against any upload URL and apply the bytes contained in the message at
@@ -39,20 +39,20 @@ public class CorePatchRequestHandler extends AbstractRequestHandler {
                         TusServletResponse servletResponse, UploadStorageService uploadStorageService,
                         String ownerKey) throws IOException, TusException {
 
-        boolean found = true;
-        UploadInfo uploadInfo = uploadStorageService.getUploadInfo(servletRequest.getRequestURI(), ownerKey);
+        Optional<UploadInfo> uploadInfoOptional = uploadStorageService.getUploadInfo(servletRequest.getRequestURI(), ownerKey);
 
-        if (uploadInfo == null) {
-            found = false;
-        } else if (uploadInfo.isUploadInProgress()) {
-            try {
-                uploadInfo = uploadStorageService.append(uploadInfo, servletRequest.getContentInputStream());
-            } catch (UploadNotFoundException e) {
-                found = false;
+        if (!uploadInfoOptional.isPresent()) {
+            this.handleError(servletRequest, servletResponse);
+        } else {
+            UploadInfo uploadInfo = uploadInfoOptional.get();
+
+            if (uploadInfo.isUploadInProgress()) {
+                try {
+                    uploadInfo = uploadStorageService.append(uploadInfo, servletRequest.getContentInputStream());
+                } catch (UploadNotFoundException e) {
+                    this.handleError(servletRequest, servletResponse);
+                }
             }
-        }
-
-        if (found) {
             servletResponse.setHeader(HttpHeader.UPLOAD_OFFSET, Objects.toString(uploadInfo.getOffset()));
             servletResponse.setStatus(HttpServletResponse.SC_NO_CONTENT);
 
@@ -60,10 +60,12 @@ public class CorePatchRequestHandler extends AbstractRequestHandler {
                 log.info("Upload with ID {} at location {} finished successfully",
                         uploadInfo.getId(), servletRequest.getRequestURI());
             }
-        } else {
-            log.error("The patch request handler could not find the upload for URL " + servletRequest.getRequestURI()
-                + ". This means something is really wrong the request validators!");
-            servletResponse.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
+    }
+
+    private void handleError(TusServletRequest servletRequest, TusServletResponse servletResponse) throws IOException {
+        log.error("The patch request handler could not find the upload for URL " + servletRequest.getRequestURI()
+            + ". This means something is really wrong the request validators!");
+        servletResponse.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
     }
 }

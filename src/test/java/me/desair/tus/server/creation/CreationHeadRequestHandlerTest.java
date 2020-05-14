@@ -60,7 +60,7 @@ public class CreationHeadRequestHandlerTest {
         info.setOffset(2L);
         info.setLength(10L);
         info.setEncodedMetadata("encoded-metadata");
-        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(info);
+        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(java.util.Optional.of(info));
         handler.process(HttpMethod.HEAD, new TusServletRequest(servletRequest), new TusServletResponse(servletResponse), uploadStorageService, null);
         assertThat(servletResponse.getHeader(HttpHeader.UPLOAD_METADATA), is("encoded-metadata"));
         assertThat(servletResponse.getHeader(HttpHeader.UPLOAD_DEFER_LENGTH), is(nullValue()));
@@ -72,7 +72,7 @@ public class CreationHeadRequestHandlerTest {
         info.setOffset(2L);
         info.setLength(10L);
         info.setEncodedMetadata(null);
-        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(info);
+        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(java.util.Optional.of(info));
         handler.process(HttpMethod.HEAD, new TusServletRequest(servletRequest), new TusServletResponse(servletResponse), uploadStorageService, null);
         assertThat(servletResponse.getHeader(HttpHeader.UPLOAD_METADATA), is(nullValue()));
         assertThat(servletResponse.getHeader(HttpHeader.UPLOAD_DEFER_LENGTH), is(nullValue()));
@@ -84,7 +84,7 @@ public class CreationHeadRequestHandlerTest {
         info.setOffset(2L);
         info.setLength(null);
         info.setEncodedMetadata("encoded-metadata");
-        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(info);
+        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(java.util.Optional.of(info));
         handler.process(HttpMethod.HEAD, new TusServletRequest(servletRequest), new TusServletResponse(servletResponse), uploadStorageService, null);
         assertThat(servletResponse.getHeader(HttpHeader.UPLOAD_METADATA), is("encoded-metadata"));
         assertThat(servletResponse.getHeader(HttpHeader.UPLOAD_DEFER_LENGTH), is("1"));
@@ -96,7 +96,7 @@ public class CreationHeadRequestHandlerTest {
         info.setOffset(2L);
         info.setLength(null);
         info.setEncodedMetadata(null);
-        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(info);
+        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(java.util.Optional.of(info));
         handler.process(HttpMethod.HEAD, new TusServletRequest(servletRequest), new TusServletResponse(servletResponse), uploadStorageService, null);
         assertThat(servletResponse.getHeader(HttpHeader.UPLOAD_METADATA), is(nullValue()));
         assertThat(servletResponse.getHeader(HttpHeader.UPLOAD_DEFER_LENGTH), is("1"));

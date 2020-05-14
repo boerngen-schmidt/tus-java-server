@@ -20,6 +20,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 
 import java.text.ParseException;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.TimeZone;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -66,7 +67,7 @@ public class ExpirationRequestHandlerTest {
     @Test
     public void testCreatedUpload() throws Exception {
         UploadInfo info = createUploadInfo();
-        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(info);
+        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(java.util.Optional.of(info));
         when(uploadStorageService.getUploadExpirationPeriod()).thenReturn(172800000L);
         TusServletResponse tusResponse = new TusServletResponse(this.servletResponse);
         tusResponse.setHeader(HttpHeader.LOCATION, "/tus/upload/12345");
@@ -80,7 +81,7 @@ public class ExpirationRequestHandlerTest {
         UploadInfo info = createUploadInfo();
         info.setOffset(2L);
         info.setLength(10L);
-        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(info);
+        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(java.util.Optional.of(info));
         when(uploadStorageService.getUploadExpirationPeriod()).thenReturn(172800000L);
         TusServletResponse tusResponse = new TusServletResponse(this.servletResponse);
         handler.process(HttpMethod.PATCH, new TusServletRequest(servletRequest), tusResponse, uploadStorageService, null);
@@ -90,7 +91,7 @@ public class ExpirationRequestHandlerTest {
 
     @Test
     public void testNoUpload() throws Exception {
-        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(null);
+        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(Optional.empty());
         when(uploadStorageService.getUploadExpirationPeriod()).thenReturn(172800000L);
         TusServletResponse tusResponse = new TusServletResponse(this.servletResponse);
         handler.process(HttpMethod.PATCH, new TusServletRequest(servletRequest), tusResponse, uploadStorageService, null);
@@ -103,7 +104,7 @@ public class ExpirationRequestHandlerTest {
         UploadInfo info = createUploadInfo();
         info.setOffset(10L);
         info.setLength(10L);
-        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(info);
+        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(java.util.Optional.of(info));
         when(uploadStorageService.getUploadExpirationPeriod()).thenReturn(172800000L);
         TusServletResponse tusResponse = new TusServletResponse(this.servletResponse);
         handler.process(HttpMethod.PATCH, new TusServletRequest(servletRequest), tusResponse, uploadStorageService, null);
@@ -117,7 +118,7 @@ public class ExpirationRequestHandlerTest {
         UploadInfo info = createUploadInfo();
         info.setOffset(8L);
         info.setLength(10L);
-        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(info);
+        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(java.util.Optional.of(info));
         when(uploadStorageService.getUploadExpirationPeriod()).thenReturn(null);
         TusServletResponse tusResponse = new TusServletResponse(this.servletResponse);
         handler.process(HttpMethod.PATCH, new TusServletRequest(servletRequest), tusResponse, uploadStorageService, null);
@@ -130,7 +131,7 @@ public class ExpirationRequestHandlerTest {
         UploadInfo info = createUploadInfo();
         info.setOffset(8L);
         info.setLength(10L);
-        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(info);
+        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(java.util.Optional.of(info));
         when(uploadStorageService.getUploadExpirationPeriod()).thenReturn(0L);
         TusServletResponse tusResponse = new TusServletResponse(this.servletResponse);
         handler.process(HttpMethod.PATCH, new TusServletRequest(servletRequest), tusResponse, uploadStorageService, null);
@@ -143,7 +144,7 @@ public class ExpirationRequestHandlerTest {
         UploadInfo info = createUploadInfo();
         info.setOffset(8L);
         info.setLength(10L);
-        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(info);
+        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(java.util.Optional.of(info));
         when(uploadStorageService.getUploadExpirationPeriod()).thenReturn(-10L);
         TusServletResponse tusResponse = new TusServletResponse(this.servletResponse);
         handler.process(HttpMethod.PATCH, new TusServletRequest(servletRequest), tusResponse, uploadStorageService, null);

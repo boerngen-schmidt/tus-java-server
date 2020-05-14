@@ -1,7 +1,16 @@
 package me.desair.tus.server.upload.disk;
 
-import static java.nio.file.StandardOpenOption.READ;
-import static java.nio.file.StandardOpenOption.WRITE;
+import me.desair.tus.server.exception.InvalidUploadOffsetException;
+import me.desair.tus.server.exception.TusException;
+import me.desair.tus.server.exception.UploadNotFoundException;
+import me.desair.tus.server.upload.*;
+import me.desair.tus.server.upload.concatenation.UploadConcatenationService;
+import me.desair.tus.server.upload.concatenation.VirtualConcatenationService;
+import me.desair.tus.server.util.Utils;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.Validate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,23 +24,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Supplier;
 
-import me.desair.tus.server.exception.InvalidUploadOffsetException;
-import me.desair.tus.server.exception.TusException;
-import me.desair.tus.server.exception.UploadNotFoundException;
-import me.desair.tus.server.upload.UploadId;
-import me.desair.tus.server.upload.UploadIdFactory;
-import me.desair.tus.server.upload.UploadInfo;
-import me.desair.tus.server.upload.UploadLockingService;
-import me.desair.tus.server.upload.UploadStorageService;
-import me.desair.tus.server.upload.UploadType;
-import me.desair.tus.server.upload.concatenation.UploadConcatenationService;
-import me.desair.tus.server.upload.concatenation.VirtualConcatenationService;
-import me.desair.tus.server.util.Utils;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.Validate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static java.nio.file.StandardOpenOption.READ;
+import static java.nio.file.StandardOpenOption.WRITE;
 
 /**
  * Implementation of {@link UploadStorageService} that implements storage on disk
@@ -239,18 +235,18 @@ public class DiskStorageService extends AbstractDiskBasedService implements Uplo
 
         UploadId id = idFactory.readUploadId(uploadURI);
 
-        UploadInfo uploadInfo = getUploadInfo(id);
-        if (uploadInfo == null || !Objects.equals(uploadInfo.getOwnerKey(), ownerKey)) {
-            throw new UploadNotFoundException("The upload with id " + id + " could not be found for owner " + ownerKey);
-        } else {
-            return getUploadedBytes(id);
-        }
+        Optional<UploadInfo> uploadInfo = getUploadInfo(id);
+        Supplier<UploadNotFoundException> exceptionSupplier = () ->
+                new UploadNotFoundException("The upload with id " + id + " could not be found for owner " + ownerKey);
+        uploadInfo.filter(info -> Objects.equals(info.getOwnerKey(), ownerKey)).orElseThrow(exceptionSupplier);
+        return getUploadedBytes(id);
     }
 
     @Override
     public InputStream getUploadedBytes(UploadId id) throws IOException, UploadNotFoundException {
         InputStream inputStream = null;
-        UploadInfo uploadInfo = getUploadInfo(id);
+        Optional<UploadInfo> uploadInfoOptional = getUploadInfo(id);
+        UploadInfo uploadInfo = uploadInfoOptional.get(); //TODO revisit logic!
         if (UploadType.CONCATENATED.equals(uploadInfo.getUploadType()) && uploadConcatenationService != null) {
             inputStream = uploadConcatenationService.getConcatenatedBytes(uploadInfo);
 
@@ -341,7 +337,7 @@ public class DiskStorageService extends AbstractDiskBasedService implements Uplo
         do {
             id = idFactory.createId();
             //For extra safety, double check that this ID is not in use yet
-        } while (getUploadInfo(id) != null);
+        } while (getUploadInfo(id).isPresent()); // TODO Infinite LOOP
         return id;
     }
 

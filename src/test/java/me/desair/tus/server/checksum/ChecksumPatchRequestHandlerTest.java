@@ -17,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import static java.util.Optional.of;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -41,7 +42,7 @@ public class ChecksumPatchRequestHandlerTest {
         UploadInfo info = new UploadInfo();
         info.setOffset(2L);
         info.setLength(10L);
-        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(info);
+        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(of(info));
     }
 
     @Test

@@ -48,7 +48,7 @@ public class ITCreationExtension extends AbstractTusExtensionIntegrationTest {
         when(uploadStorageService.create(ArgumentMatchers.any(UploadInfo.class), nullable(String.class))).then((Answer<UploadInfo>) invocation -> {
             UploadInfo upload = invocation.getArgument(0);
             upload.setId(id);
-            when(uploadStorageService.getUploadInfo(UPLOAD_URL + id.toString(), invocation.getArgument(1))).thenReturn(upload);
+            when(uploadStorageService.getUploadInfo(UPLOAD_URL + id.toString(), invocation.getArgument(1))).thenReturn(java.util.Optional.of(upload));
             return upload;
         });
     }
@@ -182,7 +182,7 @@ public class ITCreationExtension extends AbstractTusExtensionIntegrationTest {
         when(uploadStorageService.create(ArgumentMatchers.any(UploadInfo.class), nullable(String.class))).then((Answer<UploadInfo>) invocation -> {
             UploadInfo upload = invocation.getArgument(0);
             upload.setId(id);
-            when(uploadStorageService.getUploadInfo("/submission/0ae5f8vv4s8c/files/upload/" + id.toString(), invocation.getArgument(1))).thenReturn(upload);
+            when(uploadStorageService.getUploadInfo("/submission/0ae5f8vv4s8c/files/upload/" + id.toString(), invocation.getArgument(1))).thenReturn(java.util.Optional.of(upload));
             return upload;
         });
         //Create upload
@@ -209,7 +209,7 @@ public class ITCreationExtension extends AbstractTusExtensionIntegrationTest {
             when(uploadStorageService.create(ArgumentMatchers.any(UploadInfo.class), nullable(String.class))).then((Answer<UploadInfo>) invocation -> {
                 UploadInfo upload = invocation.getArgument(0);
                 upload.setId(id);
-                when(uploadStorageService.getUploadInfo("/submission/0ae5f8vv4s8c/files/upload/" + id.toString(), invocation.getArgument(1))).thenReturn(upload);
+                when(uploadStorageService.getUploadInfo("/submission/0ae5f8vv4s8c/files/upload/" + id.toString(), invocation.getArgument(1))).thenReturn(java.util.Optional.of(upload));
                 return upload;
             });
             //Create upload

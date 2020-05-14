@@ -68,7 +68,7 @@ public class ConcatenationPostRequestHandlerTest {
         TusServletResponse response = new TusServletResponse(this.servletResponse);
         UploadInfo info1 = new UploadInfo();
         info1.setId(new UploadId(UUID.randomUUID()));
-        when(uploadStorageService.getUploadInfo(eq(info1.getId().toString()), nullable(String.class))).thenReturn(info1);
+        when(uploadStorageService.getUploadInfo(eq(info1.getId().toString()), nullable(String.class))).thenReturn(java.util.Optional.of(info1));
         response.setHeader(HttpHeader.LOCATION, info1.getId().toString());
         handler.process(HttpMethod.POST, new TusServletRequest(servletRequest), response, uploadStorageService, null);
         assertThat(info1.getUploadType(), is(UploadType.REGULAR));
@@ -82,7 +82,7 @@ public class ConcatenationPostRequestHandlerTest {
         TusServletResponse response = new TusServletResponse(this.servletResponse);
         UploadInfo info1 = new UploadInfo();
         info1.setId(new UploadId(UUID.randomUUID()));
-        when(uploadStorageService.getUploadInfo(eq(info1.getId().toString()), nullable(String.class))).thenReturn(info1);
+        when(uploadStorageService.getUploadInfo(eq(info1.getId().toString()), nullable(String.class))).thenReturn(java.util.Optional.of(info1));
         response.setHeader(HttpHeader.LOCATION, info1.getId().toString());
         servletRequest.addHeader(HttpHeader.UPLOAD_CONCAT, "partial");
         handler.process(HttpMethod.POST, new TusServletRequest(servletRequest), response, uploadStorageService, null);
@@ -97,7 +97,7 @@ public class ConcatenationPostRequestHandlerTest {
         TusServletResponse response = new TusServletResponse(this.servletResponse);
         UploadInfo info1 = new UploadInfo();
         info1.setId(new UploadId(UUID.randomUUID()));
-        when(uploadStorageService.getUploadInfo(eq(info1.getId().toString()), nullable(String.class))).thenReturn(info1);
+        when(uploadStorageService.getUploadInfo(eq(info1.getId().toString()), nullable(String.class))).thenReturn(java.util.Optional.of(info1));
         response.setHeader(HttpHeader.LOCATION, info1.getId().toString());
         servletRequest.addHeader(HttpHeader.UPLOAD_CONCAT, "final; 123 456");
         handler.process(HttpMethod.POST, new TusServletRequest(servletRequest), response, uploadStorageService, null);

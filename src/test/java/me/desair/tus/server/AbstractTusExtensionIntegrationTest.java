@@ -23,6 +23,7 @@ import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
+import static java.util.Optional.ofNullable;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -51,7 +52,7 @@ public abstract class AbstractTusExtensionIntegrationTest {
         uploadInfo = new UploadInfo();
         uploadInfo.setOffset(offset);
         uploadInfo.setLength(length);
-        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(uploadInfo);
+        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(ofNullable(uploadInfo));
         when(uploadStorageService.append(any(UploadInfo.class), any(InputStream.class))).thenReturn(uploadInfo);
     }
 
