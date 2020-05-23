@@ -17,6 +17,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -59,7 +60,7 @@ public class TerminationDeleteRequestHandlerTest {
 
     @Test
     public void testWithNotExistingUpload() throws Exception {
-        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(null);
+        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(Optional.empty());
         handler.process(HttpMethod.DELETE, new TusServletRequest(servletRequest), new TusServletResponse(servletResponse), uploadStorageService, null);
         verify(uploadStorageService, never()).terminateUpload(any(UploadInfo.class));
         assertThat(servletResponse.getStatus(), is(HttpServletResponse.SC_NO_CONTENT));
@@ -72,7 +73,7 @@ public class TerminationDeleteRequestHandlerTest {
         info.setId(id);
         info.setOffset(2L);
         info.setLength(10L);
-        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(info);
+        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(java.util.Optional.of(info));
         handler.process(HttpMethod.DELETE, new TusServletRequest(servletRequest), new TusServletResponse(servletResponse), uploadStorageService, null);
         verify(uploadStorageService, times(1)).terminateUpload(info);
         assertThat(servletResponse.getStatus(), is(HttpServletResponse.SC_NO_CONTENT));

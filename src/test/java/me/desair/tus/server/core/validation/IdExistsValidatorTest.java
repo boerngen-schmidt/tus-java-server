@@ -14,6 +14,8 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.mock.web.MockHttpServletRequest;
 
+import java.util.Optional;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -42,7 +44,7 @@ public class IdExistsValidatorTest {
         UploadInfo info = new UploadInfo();
         info.setOffset(0L);
         info.setLength(10L);
-        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(info);
+        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(java.util.Optional.of(info));
         //When we validate the request
         try {
             validator.validate(HttpMethod.PATCH, servletRequest, uploadStorageService, null);
@@ -53,9 +55,9 @@ public class IdExistsValidatorTest {
     }
 
     @Test
-    public void validateInvalid() throws Exception {
+    public void validateInvalid() {
         Assertions.assertThrows(UploadNotFoundException.class, () -> {
-            when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(null);
+            when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(Optional.empty());
             //When we validate the request
             validator.validate(HttpMethod.PATCH, servletRequest, uploadStorageService, null);
             //Expect a UploadNotFoundException

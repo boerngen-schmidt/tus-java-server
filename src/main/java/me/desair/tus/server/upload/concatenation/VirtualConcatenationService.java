@@ -1,17 +1,18 @@
 package me.desair.tus.server.upload.concatenation;
 
+import me.desair.tus.server.exception.UploadNotFoundException;
+import me.desair.tus.server.upload.UploadInfo;
+import me.desair.tus.server.upload.UploadStorageService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import me.desair.tus.server.exception.UploadNotFoundException;
-import me.desair.tus.server.upload.UploadInfo;
-import me.desair.tus.server.upload.UploadStorageService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Optional;
 
 /**
  * {@link UploadConcatenationService} implementation that uses the file system to keep track
@@ -77,13 +78,10 @@ public class VirtualConcatenationService implements UploadConcatenationService {
         } else {
             List<UploadInfo> output = new ArrayList<>(concatenationParts.size());
             for (String childUri : concatenationParts) {
-                UploadInfo childInfo = uploadStorageService.getUploadInfo(childUri, info.getOwnerKey());
-                if (childInfo == null) {
-                    throw new UploadNotFoundException("Upload with URI " + childUri
-                            + " was not found for owner " + info.getOwnerKey());
-                } else {
-                    output.add(childInfo);
-                }
+                Optional<UploadInfo> childInfoOptional = uploadStorageService.getUploadInfo(childUri, info.getOwnerKey());
+                UploadInfo childInfo = childInfoOptional.orElseThrow(() ->
+                        new UploadNotFoundException("Upload with URI " + childUri + " was not found for owner " + info.getOwnerKey()));
+                output.add(childInfo);
             }
             return output;
         }

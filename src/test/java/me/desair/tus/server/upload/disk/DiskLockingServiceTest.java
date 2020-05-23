@@ -3,13 +3,11 @@ package me.desair.tus.server.upload.disk;
 import me.desair.tus.server.upload.UploadId;
 import me.desair.tus.server.upload.UploadIdFactory;
 import me.desair.tus.server.upload.UploadLock;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -17,10 +15,8 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.mockito.stubbing.Answer;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.util.UUID;
 
@@ -45,18 +41,8 @@ public class DiskLockingServiceTest {
     @Mock
     private UploadIdFactory idFactory;
 
-    private static Path storagePath;
-
-    @BeforeAll
-    public static void setupDataFolder() throws IOException {
-        storagePath = Paths.get("target", "tus", "data").toAbsolutePath();
-        Files.createDirectories(storagePath);
-    }
-
-    @AfterAll
-    public static void destroyDataFolder() throws IOException {
-        FileUtils.deleteDirectory(storagePath.toFile());
-    }
+    @TempDir
+    public Path storagePath;
 
     @BeforeEach
     public void setUp() {

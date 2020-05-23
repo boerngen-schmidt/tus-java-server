@@ -1,7 +1,5 @@
 package me.desair.tus.server.concatenation;
 
-import java.io.IOException;
-
 import me.desair.tus.server.HttpHeader;
 import me.desair.tus.server.HttpMethod;
 import me.desair.tus.server.exception.TusException;
@@ -13,6 +11,9 @@ import me.desair.tus.server.util.TusServletRequest;
 import me.desair.tus.server.util.TusServletResponse;
 import me.desair.tus.server.util.Utils;
 import org.apache.commons.lang3.StringUtils;
+
+import java.io.IOException;
+import java.util.Optional;
 
 /**
  * The Server MUST acknowledge a successful upload creation with the 201 Created status.
@@ -32,9 +33,10 @@ public class ConcatenationPostRequestHandler extends AbstractRequestHandler {
 
         //For post requests, the upload URI is part of the response
         String uploadUri = servletResponse.getHeader(HttpHeader.LOCATION);
-        UploadInfo uploadInfo = uploadStorageService.getUploadInfo(uploadUri, ownerKey);
+        Optional<UploadInfo> uploadInfoOptional = uploadStorageService.getUploadInfo(uploadUri, ownerKey);
 
-        if (uploadInfo != null) {
+        if (uploadInfoOptional.isPresent()) {
+            UploadInfo uploadInfo = uploadInfoOptional.get();
 
             String uploadConcatValue = servletRequest.getHeader(HttpHeader.UPLOAD_CONCAT);
             if (StringUtils.equalsIgnoreCase(uploadConcatValue, "partial")) {

@@ -1,9 +1,5 @@
 package me.desair.tus.server.creation;
 
-import java.io.IOException;
-
-import javax.servlet.http.HttpServletResponse;
-
 import me.desair.tus.server.HttpHeader;
 import me.desair.tus.server.HttpMethod;
 import me.desair.tus.server.exception.UploadNotFoundException;
@@ -15,6 +11,10 @@ import me.desair.tus.server.util.TusServletResponse;
 import me.desair.tus.server.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.Optional;
 
 /**
  * Upload-Defer-Length: 1 if upload size is not known at the time. Once it is known the Client MUST set
@@ -34,9 +34,10 @@ public class CreationPatchRequestHandler extends AbstractRequestHandler {
                         TusServletResponse servletResponse, UploadStorageService uploadStorageService,
                         String ownerKey) throws IOException {
 
-        UploadInfo uploadInfo = uploadStorageService.getUploadInfo(servletRequest.getRequestURI(), ownerKey);
+        Optional<UploadInfo> uploadInfoOptional = uploadStorageService.getUploadInfo(servletRequest.getRequestURI(), ownerKey);
 
-        if (uploadInfo != null && !uploadInfo.hasLength()) {
+        if (uploadInfoOptional.isPresent() && !uploadInfoOptional.get().hasLength()) {
+            UploadInfo uploadInfo = uploadInfoOptional.get();
             Long uploadLength = Utils.getLongHeader(servletRequest, HttpHeader.UPLOAD_LENGTH);
             if (uploadLength != null) {
                 uploadInfo.setLength(uploadLength);

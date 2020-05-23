@@ -1,7 +1,5 @@
 package me.desair.tus.server.creation;
 
-import java.io.IOException;
-
 import me.desair.tus.server.HttpHeader;
 import me.desair.tus.server.HttpMethod;
 import me.desair.tus.server.upload.UploadInfo;
@@ -10,6 +8,9 @@ import me.desair.tus.server.upload.UploadType;
 import me.desair.tus.server.util.AbstractRequestHandler;
 import me.desair.tus.server.util.TusServletRequest;
 import me.desair.tus.server.util.TusServletResponse;
+
+import java.io.IOException;
+import java.util.Optional;
 
 /** A HEAD request can be used to retrieve the metadata that was supplied at creation.
  * <p/>
@@ -31,8 +32,11 @@ public class CreationHeadRequestHandler extends AbstractRequestHandler {
                         TusServletResponse servletResponse, UploadStorageService uploadStorageService,
                         String ownerKey) throws IOException {
 
-        UploadInfo uploadInfo = uploadStorageService.getUploadInfo(servletRequest.getRequestURI(), ownerKey);
+        Optional<UploadInfo> optionalUploadInfo = uploadStorageService.getUploadInfo(servletRequest.getRequestURI(), ownerKey);
+        optionalUploadInfo.ifPresent(uploadInfo -> this.addMetaData(servletResponse, uploadInfo));
+    }
 
+    private void addMetaData(TusServletResponse servletResponse, UploadInfo uploadInfo) {
         if (uploadInfo.hasMetadata()) {
             servletResponse.setHeader(HttpHeader.UPLOAD_METADATA, uploadInfo.getEncodedMetadata());
         }

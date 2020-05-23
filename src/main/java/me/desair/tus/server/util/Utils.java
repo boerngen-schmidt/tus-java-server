@@ -1,17 +1,12 @@
 package me.desair.tus.server.util;
 
-import static java.nio.file.StandardOpenOption.CREATE;
-import static java.nio.file.StandardOpenOption.READ;
-import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
-import static java.nio.file.StandardOpenOption.WRITE;
+import me.desair.tus.server.HttpHeader;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
-import java.io.Serializable;
+import javax.servlet.http.HttpServletRequest;
+import java.io.*;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
@@ -19,12 +14,7 @@ import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
 
-import javax.servlet.http.HttpServletRequest;
-
-import me.desair.tus.server.HttpHeader;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static java.nio.file.StandardOpenOption.*;
 
 /**
  * Utility class that contains various static helper methods
@@ -43,6 +33,12 @@ public class Utils {
         return StringUtils.trimToEmpty(request.getHeader(header));
     }
 
+    /**
+     * TODO Replace retun value with Optional
+     * @param request
+     * @param header
+     * @return
+     */
     public static Long getLongHeader(HttpServletRequest request, String header) {
         try {
             return Long.valueOf(getHeader(request, header));

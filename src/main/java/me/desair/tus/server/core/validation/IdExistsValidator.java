@@ -1,14 +1,15 @@
 package me.desair.tus.server.core.validation;
 
-import java.io.IOException;
-
-import javax.servlet.http.HttpServletRequest;
-
 import me.desair.tus.server.HttpMethod;
 import me.desair.tus.server.RequestValidator;
 import me.desair.tus.server.exception.TusException;
 import me.desair.tus.server.exception.UploadNotFoundException;
+import me.desair.tus.server.upload.UploadInfo;
 import me.desair.tus.server.upload.UploadStorageService;
+
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.util.Optional;
 
 /**
  * If the resource is not found, the Server SHOULD return either the
@@ -21,10 +22,9 @@ public class IdExistsValidator implements RequestValidator {
                          UploadStorageService uploadStorageService, String ownerKey)
             throws TusException, IOException {
 
-        if (uploadStorageService.getUploadInfo(request.getRequestURI(), ownerKey) == null) {
-            throw new UploadNotFoundException("The upload for path " + request.getRequestURI()
-                    + " and owner " + ownerKey + " was not found.");
-        }
+        Optional<UploadInfo> uploadInfo = uploadStorageService.getUploadInfo(request.getRequestURI(), ownerKey);
+        uploadInfo.orElseThrow(() -> new UploadNotFoundException("The upload for path " + request.getRequestURI()
+                + " and owner " + ownerKey + " was not found."));
     }
 
     @Override

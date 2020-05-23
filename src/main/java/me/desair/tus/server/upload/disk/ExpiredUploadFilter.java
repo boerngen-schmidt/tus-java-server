@@ -1,15 +1,16 @@
 package me.desair.tus.server.upload.disk;
 
-import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Path;
-import java.util.Objects;
-
 import me.desair.tus.server.upload.UploadId;
 import me.desair.tus.server.upload.UploadInfo;
 import me.desair.tus.server.upload.UploadLockingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Path;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Directory stream filter that only accepts uploads that are still in progress and expired
@@ -31,9 +32,9 @@ public class ExpiredUploadFilter implements DirectoryStream.Filter<Path> {
         UploadId id = null;
         try {
             id = new UploadId(upload.getFileName().toString());
-            UploadInfo info = diskStorageService.getUploadInfo(id);
+            Optional<UploadInfo> info = diskStorageService.getUploadInfo(id);
 
-            if (info != null && info.isExpired() && !uploadLockingService.isLocked(id)) {
+            if (info.isPresent() && info.get().isExpired() && !uploadLockingService.isLocked(id)) {
                 return true;
             }
 

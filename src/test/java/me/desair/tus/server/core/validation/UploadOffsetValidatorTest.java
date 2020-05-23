@@ -15,6 +15,8 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.mock.web.MockHttpServletRequest;
 
+import java.util.Optional;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -43,7 +45,7 @@ public class UploadOffsetValidatorTest {
         UploadInfo info = new UploadInfo();
         info.setOffset(0L);
         info.setLength(10L);
-        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(info);
+        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(java.util.Optional.of(info));
         servletRequest.addHeader(HttpHeader.UPLOAD_OFFSET, 0L);
         //When we validate the request
         try {
@@ -59,7 +61,7 @@ public class UploadOffsetValidatorTest {
         UploadInfo info = new UploadInfo();
         info.setOffset(5L);
         info.setLength(10L);
-        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(info);
+        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(java.util.Optional.of(info));
         servletRequest.addHeader(HttpHeader.UPLOAD_OFFSET, 5L);
         //When we validate the request
         try {
@@ -71,12 +73,12 @@ public class UploadOffsetValidatorTest {
     }
 
     @Test
-    public void validateInvalidOffsetInitialUpload() throws Exception {
+    public void validateInvalidOffsetInitialUpload() {
         Assertions.assertThrows(UploadOffsetMismatchException.class, () -> {
             UploadInfo info = new UploadInfo();
             info.setOffset(0L);
             info.setLength(10L);
-            when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(info);
+            when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(java.util.Optional.of(info));
             servletRequest.addHeader(HttpHeader.UPLOAD_OFFSET, 3L);
             //When we validate the request
             validator.validate(HttpMethod.PATCH, servletRequest, uploadStorageService, null);
@@ -85,12 +87,12 @@ public class UploadOffsetValidatorTest {
     }
 
     @Test
-    public void validateInvalidOffsetInProgressUpload() throws Exception {
+    public void validateInvalidOffsetInProgressUpload() {
         Assertions.assertThrows(UploadOffsetMismatchException.class, () -> {
             UploadInfo info = new UploadInfo();
             info.setOffset(5L);
             info.setLength(10L);
-            when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(info);
+            when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(java.util.Optional.of(info));
             servletRequest.addHeader(HttpHeader.UPLOAD_OFFSET, 6L);
             //When we validate the request
             validator.validate(HttpMethod.PATCH, servletRequest, uploadStorageService, null);
@@ -99,12 +101,12 @@ public class UploadOffsetValidatorTest {
     }
 
     @Test
-    public void validateMissingUploadOffset() throws Exception {
+    public void validateMissingUploadOffset() {
         Assertions.assertThrows(UploadOffsetMismatchException.class, () -> {
             UploadInfo info = new UploadInfo();
             info.setOffset(2L);
             info.setLength(10L);
-            when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(info);
+            when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(java.util.Optional.of(info));
             //We don't set a content length header
             //servletRequest.addHeader(HttpHeader.UPLOAD_OFFSET, 3L);
             //When we validate the request
@@ -115,7 +117,7 @@ public class UploadOffsetValidatorTest {
 
     @Test
     public void validateMissingUploadInfo() throws Exception {
-        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(null);
+        when(uploadStorageService.getUploadInfo(nullable(String.class), nullable(String.class))).thenReturn(Optional.empty());
         servletRequest.addHeader(HttpHeader.UPLOAD_OFFSET, 3L);
         //When we validate the request
         try {

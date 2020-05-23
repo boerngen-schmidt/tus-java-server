@@ -1,10 +1,5 @@
 package me.desair.tus.server.core;
 
-import java.io.IOException;
-import java.util.Objects;
-
-import javax.servlet.http.HttpServletResponse;
-
 import me.desair.tus.server.HttpHeader;
 import me.desair.tus.server.HttpMethod;
 import me.desair.tus.server.upload.UploadInfo;
@@ -13,6 +8,11 @@ import me.desair.tus.server.upload.UploadType;
 import me.desair.tus.server.util.AbstractRequestHandler;
 import me.desair.tus.server.util.TusServletRequest;
 import me.desair.tus.server.util.TusServletResponse;
+
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.Objects;
+import java.util.Optional;
 
 /** A HEAD request is used to determine the offset at which the upload should be continued.
  * <p/>
@@ -35,8 +35,12 @@ public class CoreHeadRequestHandler extends AbstractRequestHandler {
                         TusServletResponse servletResponse, UploadStorageService uploadStorageService,
                         String ownerKey) throws IOException {
 
-        UploadInfo uploadInfo = uploadStorageService.getUploadInfo(servletRequest.getRequestURI(), ownerKey);
+        Optional<UploadInfo> uploadInfoOptional = uploadStorageService.getUploadInfo(servletRequest.getRequestURI(), ownerKey);
 
+        uploadInfoOptional.ifPresent(uploadInfo -> this.addHeader(servletResponse, uploadInfo));
+    }
+
+    private void addHeader(TusServletResponse servletResponse, UploadInfo uploadInfo) {
         if (!UploadType.CONCATENATED.equals(uploadInfo.getUploadType())) {
 
             if (uploadInfo.hasLength()) {
