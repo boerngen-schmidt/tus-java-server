@@ -118,7 +118,7 @@ public class TusFileUploadService {
      */
     public void process(HttpServletRequest servletRequest, HttpServletResponse servletResponse)
             throws IOException {
-        process(servletRequest, servletResponse, null);
+        process(servletRequest, servletResponse, (String) null);
     }
 
     /**
@@ -150,6 +150,16 @@ public class TusFileUploadService {
         } catch (TusException e) {
             log.error("Unable to lock upload for request URI " + request.getRequestURI(), e);
         }
+    }
+
+    /**
+     *
+     * @param request
+     * @param response
+     * @param id Already by user extracted {@link UploadId} by the outer environment
+     */
+    public void process(HttpServletRequest request, HttpServletResponse response, UploadId id) {
+
     }
 
     /**
@@ -338,7 +348,7 @@ public class TusFileUploadService {
         private boolean chunkedTransferDecoding;
 
         private Builder() {
-            // Set Core extension lasily
+            // Set Core extension lazily
             coreExtensions = Collections.unmodifiableSet(
                     new HashSet<>(
                             Arrays.asList(
@@ -365,6 +375,7 @@ public class TusFileUploadService {
 
             // add user extension
             Stream.of(userExtensions, coreExtensions).flatMap(Collection::stream)
+                    .distinct()
                     .map(Builder::createTusExtension)
                     .forEach(service::addTusExtension);
 
