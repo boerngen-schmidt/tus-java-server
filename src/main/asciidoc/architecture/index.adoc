@@ -1,0 +1,37 @@
+= Architecture
+
+== Introduction and Goals
+
+The Goal is to provide a library that mainly depends on core Java to provide a server side implementation of the
+https://tus.io/protocols/resumable-upload.html[TUS Protocol] to provide a mechanism for resumable file uploads via
+HTTP/1.1 and HTTP/2.
+
+=== Quality Goals
+
+- Full implementation of protocol
+- Performance in terms of throughput
+
+
+== Questions
+
+The primary questions that need a solution are:
+
+- When is information about the request available, in terms of when do I know everything about the request to process it.
+- What component solves which problem
+
+- Is it nessesary to transport information from Header Validation back to the request?
+
+== Components
+
+The library has to core components which are an ID-Service and Request-Processor. Also necessary are the supporting
+components Storage and Locking.
+
+[plantuml]
+----
+include::components.puml[]
+----
+
+=== Upload Service
+
+The Upload Service is the core component, that manages Extensions and provides the functionality to process requests
+using the https://tus.io/protocols/resumable-upload.html[TUS Protocol]^.

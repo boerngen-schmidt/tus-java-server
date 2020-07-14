@@ -18,6 +18,14 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
+
+        <asciidoctor.maven.plugin.version>2.0.0-RC.1</asciidoctor.maven.plugin.version>
+        <asciidoctor-revealjs.version>master</asciidoctor-revealjs.version>
+        <asciidoctorj.version>2.3.0</asciidoctorj.version>
+        <asciidoctorj.diagram.version>2.0.2</asciidoctorj.diagram.version>
+        <asciidoctorj.pdf.version>1.5.3</asciidoctorj.pdf.version>
+        <asciidoctorj.epub.version>1.5.0-alpha.16</asciidoctorj.epub.version>
+        <jruby.version>9.2.11.1</jruby.version>
     </properties>
 
     <dependencyManagement>
@@ -132,6 +140,35 @@
     </dependencies>
 
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.asciidoctor</groupId>
+                    <artifactId>asciidoctor-maven-plugin</artifactId>
+                    <version>${asciidoctor.maven.plugin.version}</version>
+                    <dependencies>
+                        <!-- Comment this section to use the default jruby artifact provided by the plugin -->
+                        <dependency>
+                            <groupId>org.jruby</groupId>
+                            <artifactId>jruby-complete</artifactId>
+                            <version>${jruby.version}</version>
+                        </dependency>
+                        <!-- Comment this section to use the default AsciidoctorJ artifact provided by the plugin -->
+                        <dependency>
+                            <groupId>org.asciidoctor</groupId>
+                            <artifactId>asciidoctorj</artifactId>
+                            <version>${asciidoctorj.version}</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.asciidoctor</groupId>
+                            <artifactId>asciidoctorj-diagram</artifactId>
+                            <version>${asciidoctorj.diagram.version}</version>
+                        </dependency>
+                    </dependencies>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
         <plugins>
             <plugin>
                 <groupId>org.jacoco</groupId>
@@ -154,7 +191,7 @@
                                 Sets the name of the property containing the settings
                                 for JaCoCo runtime agent.
                             -->
-                            <propertyName>surefireArgLine</propertyName>
+                            <propertyName>jacocoSurefireArgLine</propertyName>
                         </configuration>
                     </execution>
                     <!--
@@ -227,7 +264,7 @@
                 </dependencies>
                 <configuration>
                     <!-- Sets the VM argument line used when unit tests are run. -->
-                    <argLine>${surefireArgLine}</argLine>
+                    <argLine>@{jacocoSurefireArgLine}</argLine>
                     <!-- Sonar test count workaround -->
                     <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
                 </configuration>
@@ -479,6 +516,44 @@
                                 <goals>
                                     <goal>sign</goal>
                                 </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>documentation</id>
+            <build>
+                <defaultGoal>generate-resources</defaultGoal>
+                <plugins>
+                    <plugin>
+                        <groupId>org.asciidoctor</groupId>
+                        <artifactId>asciidoctor-maven-plugin</artifactId>
+                        <configuration>
+                            <requires>
+                                <require>asciidoctor-diagram</require>
+                            </requires>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>output-html</id>
+                                <phase>generate-resources</phase>
+                                <goals>
+                                    <goal>process-asciidoc</goal>
+                                </goals>
+                                <configuration>
+                                    <backend>html5</backend>
+                                    <attributes>
+                                        <imagesdir>./images</imagesdir>
+                                        <toc>left</toc>
+                                        <icons>font</icons>
+                                        <sectanchors>true</sectanchors>
+                                        <idprefix/>
+                                        <idseparator>-</idseparator>
+                                    </attributes>
+                                </configuration>
                             </execution>
                         </executions>
                     </plugin>

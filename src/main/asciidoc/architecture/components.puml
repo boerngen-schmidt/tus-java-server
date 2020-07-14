@@ -1,0 +1,21 @@
+@startuml
+interface "HTTP" as http
+component [HTTP Endpoint] as ep
+
+http -- ep
+note right of ep : a Servlet or JAX-RS endpoint
+
+package "TUS Java Server" {
+    component [Upload Service] as tus
+    component [ID Service] as tusids
+    component [Storage Service] as storage
+    component [Locking Service] as locking
+
+    ep --> tus : process
+    ep .. tusids : EP can provide\n pre-extracted ID
+    tusids -> tus : provides ID
+
+    tus ..> storage : use
+    tus ..> locking : use
+}
+@enduml
